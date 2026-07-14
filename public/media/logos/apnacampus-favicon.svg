@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#001C55"/>
+
+  <!-- Left Curly Bracket { -->
+  <path d="M 190 90 C 148 90 138 108 138 148 L 138 220 C 138 245 120 256 90 264 C 120 272 138 283 138 308 L 138 380 C 138 420 148 438 190 438"
+        stroke="white"
+        stroke-width="38"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none" />
+
+  <!-- Right Curly Bracket } -->
+  <path d="M 322 90 C 364 90 374 108 374 148 L 374 220 C 374 245 392 256 422 264 C 392 272 374 283 374 308 L 374 380 C 374 420 364 438 322 438"
+        stroke="white"
+        stroke-width="38"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none" />
+
+  <!-- Graduation Cap base -->
+  <path d="M 210 278 V 318 C 210 342 302 342 302 318 V 278"
+        fill="#FF9F0A" />
+
+  <!-- Graduation Cap top diamond -->
+  <path d="M 256 195 L 355 245 L 256 295 L 157 245 Z"
+        fill="#FF9F0A" />
+
+  <!-- Tassel string -->
+  <path d="M 256 245 L 322 272 V 308"
+        stroke="#FF9F0A"
+        stroke-width="9"
+        stroke-linecap="round"
+        fill="none" />
+  <circle cx="322" cy="316" r="8" fill="#FF9F0A"/>
+</svg>
