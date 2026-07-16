@@ -6,6 +6,7 @@ import {MasterInit} from '../_metronic/layout/MasterInit'
 import {AuthInit} from './modules/auth'
 import {ThemeModeProvider} from '../_metronic/partials'
 import {NetworkErrorBoundary} from '../_metronic/layout/components/NetworkErrorBoundary'
+import {Toaster} from 'react-hot-toast'
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
           <ThemeModeProvider>
             <AuthInit>
               <NetworkErrorBoundary />
+              <Toaster position='top-right' />
               <Outlet />
               <MasterInit />
             </AuthInit>

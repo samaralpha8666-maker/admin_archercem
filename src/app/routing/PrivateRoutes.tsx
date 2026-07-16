@@ -10,6 +10,15 @@ import { TenantsPageWrapper } from '../modules/tenants/TenantsPage'
 import { DocumentsPageWrapper } from '../modules/documents/DocumentsPage'
 import { ProfilePageWrapper } from '../modules/settings/ProfilePage'
 
+const BrandsPage = lazy(() => import('../modules/archerchem/BrandsPage'))
+const OIFPage = lazy(() => import('../modules/archerchem/OIFPage'))
+const ElectronicsPage = lazy(() => import('../modules/archerchem/ElectronicsPage'))
+const QCPage = lazy(() => import('../modules/archerchem/QCPage'))
+const CalibrationPage = lazy(() => import('../modules/archerchem/CalibrationPage'))
+const AMCPage = lazy(() => import('../modules/archerchem/AMCPage'))
+const PurchasePage = lazy(() => import('../modules/archerchem/PurchasePage'))
+const StorePage = lazy(() => import('../modules/archerchem/StorePage'))
+
 const PrivateRoutes = () => {
   const { currentUser } = useAuth();
   const isSuperAdmin = currentUser?.role === 'super_admin';
@@ -28,7 +37,75 @@ const PrivateRoutes = () => {
         {isSuperAdmin ? (
           <Route path='tenants' element={<TenantsPageWrapper />} />
         ) : (
-          <Route path='documents' element={<DocumentsPageWrapper />} />
+          <>
+            <Route path='documents' element={<DocumentsPageWrapper />} />
+            
+            {/* Archerchem ERP Modules */}
+            <Route
+              path='brands'
+              element={
+                <SuspensedView>
+                  <BrandsPage />
+                </SuspensedView>
+              }
+            />
+            <Route
+              path='oif/*'
+              element={
+                <SuspensedView>
+                  <OIFPage />
+                </SuspensedView>
+              }
+            />
+            <Route
+              path='electronics'
+              element={
+                <SuspensedView>
+                  <ElectronicsPage />
+                </SuspensedView>
+              }
+            />
+            <Route
+              path='qc/*'
+              element={
+                <SuspensedView>
+                  <QCPage />
+                </SuspensedView>
+              }
+            />
+            <Route
+              path='calibration/*'
+              element={
+                <SuspensedView>
+                  <CalibrationPage />
+                </SuspensedView>
+              }
+            />
+            <Route
+              path='amc/*'
+              element={
+                <SuspensedView>
+                  <AMCPage />
+                </SuspensedView>
+              }
+            />
+            <Route
+              path='purchase/*'
+              element={
+                <SuspensedView>
+                  <PurchasePage />
+                </SuspensedView>
+              }
+            />
+            <Route
+              path='store/*'
+              element={
+                <SuspensedView>
+                  <StorePage />
+                </SuspensedView>
+              }
+            />
+          </>
         )}
 
         <Route path='settings/profile' element={<ProfilePageWrapper />} />

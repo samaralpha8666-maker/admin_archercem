@@ -1,7 +1,7 @@
 import { FC, useState, useEffect } from 'react'
 import { PageTitle } from '../../../_metronic/layout/core'
 import { Content } from '../../../_metronic/layout/components/content'
-import { getTenants, createTenant } from '../auth/core/_requests'
+import { getTenants, createTenant, createTenantAdmin, getTenantAdmins } from '../auth/core/_requests'
 import { TenantModel } from '../auth/core/_models'
 
 const TenantsPage: FC = () => {
@@ -20,6 +20,23 @@ const TenantsPage: FC = () => {
   const [adminEmail, setAdminEmail] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+
+  // Add Admin Modal state
+  const [showAdminModal, setShowAdminModal] = useState(false)
+  const [selectedTenantForAdmin, setSelectedTenantForAdmin] = useState<TenantModel | null>(null)
+  const [adminNameInput, setAdminNameInput] = useState('')
+  const [adminEmailInput, setAdminEmailInput] = useState('')
+  const [adminPasswordInput, setAdminPasswordInput] = useState('')
+  const [adminFormError, setAdminFormError] = useState<string | null>(null)
+  const [adminSubmitting, setAdminSubmitting] = useState(false)
+  const [adminSuccessMessage, setAdminSuccessMessage] = useState<string | null>(null)
+
+  // View Admins Modal state
+  const [showViewAdminsModal, setShowViewAdminsModal] = useState(false)
+  const [selectedTenantForViewAdmins, setSelectedTenantForViewAdmins] = useState<TenantModel | null>(null)
+  const [viewingAdmins, setViewingAdmins] = useState<any[]>([])
+  const [loadingAdmins, setLoadingAdmins] = useState(false)
+  const [viewAdminsError, setViewAdminsError] = useState<string | null>(null)
 
   const fetchTenants = async () => {
     setLoading(true)
@@ -42,6 +59,64 @@ const TenantsPage: FC = () => {
   useEffect(() => {
     fetchTenants()
   }, [])
+
+  const handleAdminSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAdminFormError(null)
+    setAdminSuccessMessage(null)
+
+    if (!selectedTenantForAdmin) return
+
+    if (!adminNameInput || !adminEmailInput || !adminPasswordInput) {
+      setAdminFormError('All fields are required.')
+      return
+    }
+
+    setAdminSubmitting(true)
+    try {
+      const response = await createTenantAdmin(selectedTenantForAdmin.id, {
+        name: adminNameInput,
+        email: adminEmailInput,
+        password: adminPasswordInput
+      })
+
+      if (response.data.success) {
+        setAdminSuccessMessage(`Admin added successfully to ${selectedTenantForAdmin.name}!`)
+        // Reset fields
+        setAdminNameInput('')
+        setAdminEmailInput('')
+        setAdminPasswordInput('')
+        // Close modal after 1.5 seconds automatically
+        setTimeout(() => {
+          setShowAdminModal(false)
+          setAdminSuccessMessage(null)
+        }, 1500)
+      } else {
+        setAdminFormError('Failed to add admin.')
+      }
+    } catch (e: any) {
+      setAdminFormError(e.response?.data?.error || 'An error occurred while adding the admin.')
+    } finally {
+      setAdminSubmitting(false)
+    }
+  }
+
+  const fetchTenantAdmins = async (tenantId: number | string) => {
+    setLoadingAdmins(true)
+    setViewAdminsError(null)
+    try {
+      const response = await getTenantAdmins(tenantId)
+      if (response?.data?.success) {
+        setViewingAdmins(response.data.admins || [])
+      } else {
+        setViewAdminsError('Failed to load admins.')
+      }
+    } catch (e: any) {
+      setViewAdminsError(e.response?.data?.error || 'An error occurred while loading admins.')
+    } finally {
+      setLoadingAdmins(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,6 +218,7 @@ const TenantsPage: FC = () => {
                     <th className='min-w-140px'>Subdomain</th>
                     <th className='min-w-120px'>Schema Name</th>
                     <th className='min-w-100px text-end'>Status</th>
+                    <th className='min-w-100px text-end'>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,6 +262,36 @@ const TenantsPage: FC = () => {
                         <span className='badge badge-light-success fw-bold px-4 py-2 fs-8'>
                           Active
                         </span>
+                      </td>
+                      <td className='text-end'>
+                        <div className='d-flex justify-content-end gap-2'>
+                          <button
+                            className='btn btn-light-info btn-sm fw-bold'
+                            onClick={() => {
+                              setSelectedTenantForViewAdmins(tenant)
+                              setViewingAdmins([])
+                              setViewAdminsError(null)
+                              setShowViewAdminsModal(true)
+                              fetchTenantAdmins(tenant.id)
+                            }}
+                          >
+                            <i className='bi bi-eye fs-6 me-1'></i> View Admins
+                          </button>
+                          <button
+                            className='btn btn-light-primary btn-sm fw-bold'
+                            onClick={() => {
+                              setSelectedTenantForAdmin(tenant)
+                              setAdminNameInput('')
+                              setAdminEmailInput('')
+                              setAdminPasswordInput('')
+                              setAdminFormError(null)
+                              setAdminSuccessMessage(null)
+                              setShowAdminModal(true)
+                            }}
+                          >
+                            <i className='bi bi-person-plus fs-6 me-1'></i> Add Admin
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -355,6 +461,204 @@ const TenantsPage: FC = () => {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Admin Modal */}
+      {showAdminModal && selectedTenantForAdmin && (
+        <div className='modal fade show d-block' style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} role='dialog'>
+          <div className='modal-dialog modal-dialog-centered mw-600px'>
+            <div className='modal-content rounded'>
+              <div className='modal-header pb-0 border-0 justify-content-end'>
+                <button
+                  type='button'
+                  className='btn btn-sm btn-icon btn-active-color-primary'
+                  onClick={() => setShowAdminModal(false)}
+                  disabled={adminSubmitting}
+                >
+                  <i className='bi bi-x-lg fs-4'></i>
+                </button>
+              </div>
+
+              <div className='modal-body scroll-y px-10 px-lg-15 pt-0 pb-15'>
+                <form onSubmit={handleAdminSubmit} className='form'>
+                  <div className='mb-13 text-center'>
+                    <h1 className='mb-3'>Add Company Admin</h1>
+                    <div className='text-muted fw-bold fs-5'>
+                      Register a new administrator for <span className='text-dark fw-bolder'>{selectedTenantForAdmin.name}</span>.
+                    </div>
+                  </div>
+
+                  {adminFormError && (
+                    <div className='alert alert-danger d-flex align-items-center p-4 rounded mb-5'>
+                      <span className='fw-bold fs-7'>{adminFormError}</span>
+                    </div>
+                  )}
+
+                  {adminSuccessMessage && (
+                    <div className='alert alert-success d-flex align-items-center p-4 rounded mb-5'>
+                      <span className='fw-bold fs-7'>{adminSuccessMessage}</span>
+                    </div>
+                  )}
+
+                  <div className='d-flex flex-column mb-8 fv-row'>
+                    <label className='d-flex align-items-center fs-6 fw-bold mb-2 required'>
+                      Admin Name
+                    </label>
+                    <input
+                      type='text'
+                      className='form-control form-control-solid'
+                      placeholder='Enter admin name'
+                      value={adminNameInput}
+                      onChange={(e) => setAdminNameInput(e.target.value)}
+                      required
+                      disabled={adminSubmitting}
+                    />
+                  </div>
+
+                  <div className='d-flex flex-column mb-8 fv-row'>
+                    <label className='d-flex align-items-center fs-6 fw-bold mb-2 required'>
+                      Admin Email
+                    </label>
+                    <input
+                      type='email'
+                      className='form-control form-control-solid'
+                      placeholder='Enter admin email address'
+                      value={adminEmailInput}
+                      onChange={(e) => setAdminEmailInput(e.target.value)}
+                      required
+                      disabled={adminSubmitting}
+                    />
+                  </div>
+
+                  <div className='d-flex flex-column mb-8 fv-row'>
+                    <label className='d-flex align-items-center fs-6 fw-bold mb-2 required'>
+                      Admin Password
+                    </label>
+                    <input
+                      type='password'
+                      className='form-control form-control-solid'
+                      placeholder='Enter admin password (min 6 characters)'
+                      value={adminPasswordInput}
+                      onChange={(e) => setAdminPasswordInput(e.target.value)}
+                      required
+                      minLength={6}
+                      disabled={adminSubmitting}
+                    />
+                  </div>
+
+                  <div className='text-center pt-15'>
+                    <button
+                      type='button'
+                      className='btn btn-light me-3'
+                      onClick={() => setShowAdminModal(false)}
+                      disabled={adminSubmitting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type='submit'
+                      className='btn btn-primary'
+                      disabled={adminSubmitting}
+                    >
+                      {adminSubmitting ? (
+                        <span className='indicator-progress d-flex align-items-center gap-2'>
+                          <span className='spinner-border spinner-border-sm align-middle'></span>
+                          Adding...
+                        </span>
+                      ) : (
+                        'Add Admin'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Admins Modal */}
+      {showViewAdminsModal && selectedTenantForViewAdmins && (
+        <div className='modal fade show d-block' style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} role='dialog'>
+          <div className='modal-dialog modal-dialog-centered mw-650px'>
+            <div className='modal-content rounded'>
+              <div className='modal-header border-0 pb-0 justify-content-between pt-5 px-10'>
+                <h3 className='modal-title fw-bolder fs-3'>
+                  Admins of {selectedTenantForViewAdmins.name}
+                </h3>
+                <button
+                  type='button'
+                  className='btn btn-sm btn-icon btn-active-color-primary'
+                  onClick={() => setShowViewAdminsModal(false)}
+                >
+                  <i className='bi bi-x-lg fs-4'></i>
+                </button>
+              </div>
+
+              <div className='modal-body px-10 py-8'>
+                {loadingAdmins && (
+                  <div className='d-flex align-items-center justify-content-center p-10'>
+                    <span className='spinner-border spinner-border-sm align-middle me-2'></span>
+                    Loading admins...
+                  </div>
+                )}
+
+                {viewAdminsError && (
+                  <div className='alert alert-danger d-flex align-items-center p-4 rounded'>
+                    <span className='fw-bold fs-7'>{viewAdminsError}</span>
+                  </div>
+                )}
+
+                {!loadingAdmins && !viewAdminsError && viewingAdmins.length === 0 && (
+                  <div className='text-center text-muted p-10'>
+                    No administrators registered for this company yet.
+                  </div>
+                )}
+
+                {!loadingAdmins && !viewAdminsError && viewingAdmins.length > 0 && (
+                  <div className='table-responsive'>
+                    <table className='table table-row-dashed table-row-gray-200 align-middle gs-0 gy-3'>
+                      <thead>
+                        <tr className='fw-bolder text-muted fs-7 text-uppercase border-bottom-1'>
+                          <th className='min-w-150px'>Name</th>
+                          <th className='min-w-180px'>Email</th>
+                          <th className='min-w-100px text-end'>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewingAdmins.map((adm) => (
+                          <tr key={adm.id}>
+                            <td>
+                              <span className='text-gray-900 fw-bold fs-6'>{adm.name}</span>
+                            </td>
+                            <td>
+                              <span className='text-muted fw-bold fs-6'>{adm.email}</span>
+                            </td>
+                            <td className='text-end'>
+                              <span className={`badge ${adm.is_active ? 'badge-light-success' : 'badge-light-danger'} fw-bold px-3 py-1 fs-8`}>
+                                {adm.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className='modal-footer border-0 justify-content-end pb-5 px-10'>
+                <button
+                  type='button'
+                  className='btn btn-light btn-sm fw-bold'
+                  onClick={() => setShowViewAdminsModal(false)}
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>

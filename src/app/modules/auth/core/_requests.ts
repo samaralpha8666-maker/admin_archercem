@@ -49,6 +49,16 @@ export function createTenant(tenantData: TenantCreationData) {
   return axios.post<{ success: boolean; tenant: TenantModel }>(`${API_URL}/master/tenants`, tenantData)
 }
 
+export function createTenantAdmin(tenantId: number | string, adminData: { name: string; email: string; password: string }) {
+  return axios.post<{ success: boolean; user: any }>(`${API_URL}/master/tenants/${tenantId}/admins`, adminData)
+}
+
+export function getTenantAdmins(tenantId: number | string) {
+  return axios.get<{ success: boolean; admins: any[] }>(`${API_URL}/master/tenants/${tenantId}/admins`)
+}
+
+
+
 export function getDocuments() {
   return axios.get<{ success: boolean; documents: DocumentModel[] }>(`${API_URL}/tenant/documents`)
 }
@@ -132,4 +142,72 @@ export function updateProfile(profileData: { name?: string; email?: string; pass
   } else {
     return axios.put<{ success: boolean; user: UserModel }>(`${API_URL}/tenant/profile`, profileData)
   }
+}
+
+// --- OIF Order API Requests ---
+export function getOifs(branch?: string) {
+  return axios.get<{ success: boolean; orders: any[] }>(`${API_URL}/tenant/oif`, {
+    params: { branch }
+  })
+}
+
+export function createOif(oifData: any) {
+  return axios.post<{ success: boolean; order: any }>(`${API_URL}/tenant/oif`, oifData)
+}
+
+export function updateOif(id: string | number, oifData: any) {
+  return axios.put<{ success: boolean; order: any }>(`${API_URL}/tenant/oif/${id}`, oifData)
+}
+
+// --- Electronics BOM API Requests ---
+export function getElectronics(branch?: string) {
+  return axios.get<{ success: boolean; boards: any[] }>(`${API_URL}/tenant/electronics`, {
+    params: { branch }
+  })
+}
+
+export function createElectronicBoard(boardData: any) {
+  return axios.post<{ success: boolean; board: any }>(`${API_URL}/tenant/electronics`, boardData)
+}
+
+export function updateElectronicBoard(id: string | number, boardData: any) {
+  return axios.put<{ success: boolean; board: any }>(`${API_URL}/tenant/electronics/${id}`, boardData)
+}
+
+export function deleteElectronicBoard(id: string | number) {
+  return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/electronics/${id}`)
+}
+
+// --- Dynamic Branches API Requests ---
+export function getBranches() {
+  return axios.get<{ success: boolean; branches: any[] }>(`${API_URL}/tenant/branches`)
+}
+
+export function createBranch(branchData: any) {
+  return axios.post<{ success: boolean; branch: any }>(`${API_URL}/tenant/branches`, branchData)
+}
+
+export function updateBranch(id: string | number, branchData: any) {
+  return axios.put<{ success: boolean; branch: any }>(`${API_URL}/tenant/branches/${id}`, branchData)
+}
+
+export function deleteBranch(id: string | number) {
+  return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/branches/${id}`)
+}
+
+// --- Dynamic Brands API Requests ---
+export function getBrands() {
+  return axios.get<{ success: boolean; brands: any[] }>(`${API_URL}/tenant/brands`)
+}
+
+export function createBrand(brandData: any) {
+  return axios.post<{ success: boolean; brand: any }>(`${API_URL}/tenant/brands`, brandData)
+}
+
+export function updateBrand(id: string | number, brandData: any) {
+  return axios.put<{ success: boolean; brand: any }>(`${API_URL}/tenant/brands/${id}`, brandData)
+}
+
+export function deleteBrand(id: string | number) {
+  return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/brands/${id}`)
 }
