@@ -13,7 +13,7 @@ import {
   AIBlogGenerationResponse
 } from './_models'
 
-const API_URL = import.meta.env.VITE_APP_API_URL
+const API_URL = import.meta.env.VITE_APP_API_URL || 'https://api-archerchamp.onrender.com/api'
 
 export const LOGIN_URL = `${API_URL}/tenant/login`
 export const SUPERADMIN_LOGIN_URL = `${API_URL}/master/login`
