@@ -25,7 +25,7 @@ export function login(email: string, password: string, role: string = 'admin', s
   } else {
     return axios.post<LoginResponse>(LOGIN_URL, { email, password }, {
       headers: {
-        'x-tenant-subdomain': subdomain || ''
+        'x-tenant-subdomain': subdomain || 'archerchem'
       }
     })
   }
