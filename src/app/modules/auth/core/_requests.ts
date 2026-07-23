@@ -178,6 +178,16 @@ export function deleteElectronicBoard(id: string | number) {
   return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/electronics/${id}`)
 }
 
+export function manufactureElectronicBoard(id: string | number, qty: number, ref: string) {
+  return axios.post<{ success: boolean; board: any }>(`${API_URL}/tenant/electronics/${id}/manufacture`, { qty, ref })
+}
+
+export function getElectronicsLogs(boardId?: string | number) {
+  return axios.get<{ success: boolean; logs: any[] }>(`${API_URL}/tenant/electronics/logs`, {
+    params: { boardId }
+  })
+}
+
 // --- Dynamic Branches API Requests ---
 export function getBranches() {
   return axios.get<{ success: boolean; branches: any[] }>(`${API_URL}/tenant/branches`)

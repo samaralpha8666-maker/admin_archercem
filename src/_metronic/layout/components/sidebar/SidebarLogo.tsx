@@ -15,9 +15,9 @@ const SidebarLogo = (props: PropsType) => {
   const toggleRef = useRef<HTMLDivElement>(null)
   const {currentUser} = useAuth()
 
-  const defaultLogo = toAbsoluteUrl('media/logos/apnacampus.svg')
+  const defaultLogo = toAbsoluteUrl('media/logos/archerchem.png')
   const logoUrl = currentUser?.school_logo || defaultLogo
-  const schoolName = currentUser?.school_name || 'Administration'
+  const schoolName = currentUser?.school_name || 'Archerchem Instruments'
 
   const appSidebarDefaultMinimizeDesktopEnabled =
     config?.app?.sidebar?.default?.minimize?.desktop?.enabled

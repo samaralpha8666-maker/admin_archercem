@@ -34,13 +34,22 @@ export function Login({ isSuperRoute = false }: LoginProps) {
     const saved = localStorage.getItem('selected_company')
     if (saved) {
       try {
-        return JSON.parse(saved)
+        const parsed = JSON.parse(saved)
+        if (parsed && parsed.subdomain === 'archerchem') {
+          return parsed
+        }
       } catch (e) {
         console.error('Failed to parse saved company', e)
-        return null
       }
     }
-    return null
+    const defaultCompany = {
+      id: '2',
+      name: 'Archer Chem',
+      subdomain: 'archerchem',
+      logo: null
+    }
+    localStorage.setItem('selected_company', JSON.stringify(defaultCompany))
+    return defaultCompany
   }
 
   const savedCompany = getSavedCompany()
@@ -197,8 +206,8 @@ export function Login({ isSuperRoute = false }: LoginProps) {
       <div className='text-center mb-11'>
         <div className='d-flex justify-content-center mb-5'>
           <img
-            alt={selectedCompanyName || 'apnacampus'}
-            src={selectedCompanyLogo || toAbsoluteUrl('media/logos/apnacampus.svg')}
+            alt={selectedCompanyName || 'Archerchem'}
+            src={selectedCompanyLogo || toAbsoluteUrl('media/logos/archerchem.png')}
             style={{
               height: selectedCompanyLogo ? '160px' : '70px',
               width: 'auto',
@@ -212,7 +221,7 @@ export function Login({ isSuperRoute = false }: LoginProps) {
           {selectedCompanyName ? selectedCompanyName : 'Sign In'}
         </h1>
         <div className='text-gray-500 fw-semibold fs-6'>
-          {selectedCompanyName ? 'Company Admin Portal' : 'apnacampus Multi-Tenant Company Portal'}
+          {selectedCompanyName ? 'Company Admin Portal' : 'Archerchem Instruments'}
         </div>
       </div>
 

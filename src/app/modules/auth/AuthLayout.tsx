@@ -21,8 +21,8 @@ const AuthLayout = () => {
         <div className='d-flex align-items-center justify-content-center d-lg-none mb-10'>
           <Link to='/'>
             <img
-              alt='apnacampus Logo'
-              src={toAbsoluteUrl('media/logos/apnacampus.svg')}
+              alt='Archerchem Logo'
+              src={toAbsoluteUrl('media/logos/archerchem.png')}
               className='h-45px'
             />
           </Link>

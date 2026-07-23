@@ -24,13 +24,6 @@ const SidebarMenuMain = () => {
         />
       ) : (
         <>
-          <SidebarMenuItem
-            to='/documents'
-            icon='document'
-            title='Documents'
-            fontIcon='bi-file-text'
-          />
-
           <div className='menu-item'>
             <div className='menu-content pt-8 pb-2'>
               <span className='menu-section text-muted text-uppercase fs-8 ls-1'>Archerchem ERP</span>
@@ -39,7 +32,7 @@ const SidebarMenuMain = () => {
 
           <SidebarMenuItem
             to='/brands'
-            icon='element-11'
+            icon='geolocation'
             title='Brands & Branches'
             fontIcon='bi-building'
           />
@@ -52,9 +45,10 @@ const SidebarMenuMain = () => {
           <SidebarMenuItem
             to='/electronics'
             icon='cpu'
-            title='Electronics BOM'
+            title='Electronics Material'
             fontIcon='bi-cpu'
           />
+
           <SidebarMenuItem
             to='/qc'
             icon='shield-tick'

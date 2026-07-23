@@ -59,18 +59,18 @@ const AuthProvider: FC<WithChildren> = ({ children }) => {
 
   // ── Dynamic tab title + favicon based on logged-in company ──
   useEffect(() => {
-    const defaultTitle = 'apnacampus - Company Portal'
-    const defaultFavicon = '/media/logos/apnacampus-favicon.svg'
+    const defaultTitle = 'Archerchem Instruments'
+    const defaultFavicon = '/media/logos/archerchem-favicon.png'
 
     if (currentUser?.school_name) {
       // Company admin logged in — show company name
-      document.title = `${currentUser.school_name} | apnacampus`
+      document.title = `${currentUser.school_name} | Archerchem`
 
-      // Update favicon to company logo if available, else keep apnacampus favicon
+      // Update favicon to company logo if available, else keep default favicon
       const faviconHref = currentUser.school_logo || defaultFavicon
       updateFavicon(faviconHref)
     } else if (currentUser?.role === 'super_admin') {
-      document.title = 'Super Admin | apnacampus'
+      document.title = 'Super Admin | Archerchem'
       updateFavicon(defaultFavicon)
     } else {
       document.title = defaultTitle
