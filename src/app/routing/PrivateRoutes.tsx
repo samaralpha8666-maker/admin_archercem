@@ -10,6 +10,8 @@ import { TenantsPageWrapper } from '../modules/tenants/TenantsPage'
 import { DocumentsPageWrapper } from '../modules/documents/DocumentsPage'
 import { ProfilePageWrapper } from '../modules/settings/ProfilePage'
 
+import { UserManagementPageWrapper } from '../modules/settings/UserManagementPage'
+
 const BrandsPage = lazy(() => import('../modules/archerchem/BrandsPage'))
 const OIFPage = lazy(() => import('../modules/archerchem/OIFPage'))
 const ElectronicsPage = lazy(() => import('../modules/archerchem/ElectronicsPage'))
@@ -18,6 +20,17 @@ const CalibrationPage = lazy(() => import('../modules/archerchem/CalibrationPage
 const AMCPage = lazy(() => import('../modules/archerchem/AMCPage'))
 const PurchasePage = lazy(() => import('../modules/archerchem/PurchasePage'))
 const StorePage = lazy(() => import('../modules/archerchem/StorePage'))
+
+const PermissionGuard: FC<{ moduleKey: string; children: React.ReactNode }> = ({ moduleKey, children }) => {
+  const { currentUser } = useAuth()
+  if (currentUser?.role === 'super_admin' || currentUser?.role === 'admin') {
+    return <>{children}</>
+  }
+  if (!currentUser?.permissions || currentUser.permissions.includes(moduleKey)) {
+    return <>{children}</>
+  }
+  return <Navigate to='/dashboard' replace />
+}
 
 const PrivateRoutes = () => {
   const { currentUser } = useAuth();
@@ -44,65 +57,89 @@ const PrivateRoutes = () => {
             <Route
               path='brands'
               element={
-                <SuspensedView>
-                  <BrandsPage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='brands'>
+                  <SuspensedView>
+                    <BrandsPage />
+                  </SuspensedView>
+                </PermissionGuard>
               }
             />
             <Route
               path='oif/*'
               element={
-                <SuspensedView>
-                  <OIFPage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='oif'>
+                  <SuspensedView>
+                    <OIFPage />
+                  </SuspensedView>
+                </PermissionGuard>
               }
             />
             <Route
               path='electronics'
               element={
-                <SuspensedView>
-                  <ElectronicsPage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='electronics'>
+                  <SuspensedView>
+                    <ElectronicsPage />
+                  </SuspensedView>
+                </PermissionGuard>
               }
             />
             <Route
               path='qc/*'
               element={
-                <SuspensedView>
-                  <QCPage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='qc'>
+                  <SuspensedView>
+                    <QCPage />
+                  </SuspensedView>
+                </PermissionGuard>
               }
             />
             <Route
               path='calibration/*'
               element={
-                <SuspensedView>
-                  <CalibrationPage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='calibration'>
+                  <SuspensedView>
+                    <CalibrationPage />
+                  </SuspensedView>
+                </PermissionGuard>
               }
             />
             <Route
               path='amc/*'
               element={
-                <SuspensedView>
-                  <AMCPage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='amc'>
+                  <SuspensedView>
+                    <AMCPage />
+                  </SuspensedView>
+                </PermissionGuard>
               }
             />
             <Route
               path='purchase/*'
               element={
-                <SuspensedView>
-                  <PurchasePage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='purchase'>
+                  <SuspensedView>
+                    <PurchasePage />
+                  </SuspensedView>
+                </PermissionGuard>
               }
             />
             <Route
               path='store/*'
               element={
-                <SuspensedView>
-                  <StorePage />
-                </SuspensedView>
+                <PermissionGuard moduleKey='store'>
+                  <SuspensedView>
+                    <StorePage />
+                  </SuspensedView>
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path='users'
+              element={
+                <PermissionGuard moduleKey='users'>
+                  <UserManagementPageWrapper />
+                </PermissionGuard>
               }
             />
           </>

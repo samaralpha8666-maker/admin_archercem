@@ -203,26 +203,10 @@ export function Login({ isSuperRoute = false }: LoginProps) {
       id='kt_login_signin_form'
     >
       {/* ── Heading ── */}
-      <div className='text-center mb-11'>
-        <div className='d-flex justify-content-center mb-5'>
-          <img
-            alt={selectedCompanyName || 'Archerchem'}
-            src={selectedCompanyLogo || toAbsoluteUrl('media/logos/archerchem.png')}
-            style={{
-              height: selectedCompanyLogo ? '160px' : '70px',
-              width: 'auto',
-              borderRadius: selectedCompanyLogo ? '8px' : '0',
-              objectFit: 'contain',
-              transition: 'all 0.3s ease',
-            }}
-          />
-        </div>
-        <h1 className='text-gray-900 fw-bolder mb-2' style={{ fontSize: '1.9rem', letterSpacing: '-0.5px' }}>
-          {selectedCompanyName ? selectedCompanyName : 'Sign In'}
+      <div className='text-center mb-8'>
+        <h1 className='text-gray-900 fw-bolder mb-1' style={{ fontSize: '1.8rem', letterSpacing: '-0.5px' }}>
+          Sign In
         </h1>
-        <div className='text-gray-500 fw-semibold fs-6'>
-          {selectedCompanyName ? 'Company Admin Portal' : 'Archerchem Instruments'}
-        </div>
       </div>
 
       {/* ── Status / Info Banner ── */}

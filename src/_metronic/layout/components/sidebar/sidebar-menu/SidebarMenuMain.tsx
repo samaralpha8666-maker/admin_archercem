@@ -7,6 +7,12 @@ const SidebarMenuMain = () => {
   const { currentUser } = useAuth()
   const isSuperAdmin = currentUser?.role === 'super_admin'
 
+  const hasPermission = (moduleKey: string) => {
+    if (isSuperAdmin || currentUser?.role === 'admin') return true
+    if (!currentUser?.permissions) return true
+    return currentUser.permissions.includes(moduleKey)
+  }
+
   return (
     <>
       <SidebarMenuItem
@@ -30,55 +36,86 @@ const SidebarMenuMain = () => {
             </div>
           </div>
 
-          <SidebarMenuItem
-            to='/brands'
-            icon='geolocation'
-            title='Brands & Branches'
-            fontIcon='bi-building'
-          />
-          <SidebarMenuItem
-            to='/oif'
-            icon='briefcase'
-            title='OIF (Order Intimation)'
-            fontIcon='bi-file-earmark-text'
-          />
-          <SidebarMenuItem
-            to='/electronics'
-            icon='cpu'
-            title='Electronics Material'
-            fontIcon='bi-cpu'
-          />
+          {hasPermission('brands') && (
+            <SidebarMenuItem
+              to='/brands'
+              icon='geolocation'
+              title='Brands & Branches'
+              fontIcon='bi-building'
+            />
+          )}
 
-          <SidebarMenuItem
-            to='/qc'
-            icon='shield-tick'
-            title='QC Test Reports'
-            fontIcon='bi-shield-check'
-          />
-          <SidebarMenuItem
-            to='/calibration'
-            icon='award'
-            title='Calibration Lab'
-            fontIcon='bi-clipboard-check'
-          />
-          <SidebarMenuItem
-            to='/amc'
-            icon='wrench'
-            title='Service & AMC'
-            fontIcon='bi-tools'
-          />
-          <SidebarMenuItem
-            to='/purchase'
-            icon='basket'
-            title='Purchase Requisitions'
-            fontIcon='bi-cart'
-          />
-          <SidebarMenuItem
-            to='/store'
-            icon='archive'
-            title='Store & Inventory'
-            fontIcon='bi-box-seam'
-          />
+          {hasPermission('oif') && (
+            <SidebarMenuItem
+              to='/oif'
+              icon='briefcase'
+              title='OIF (Order Intimation)'
+              fontIcon='bi-file-earmark-text'
+            />
+          )}
+
+          {hasPermission('electronics') && (
+            <SidebarMenuItem
+              to='/electronics'
+              icon='cpu'
+              title='Electronics Material'
+              fontIcon='bi-cpu'
+            />
+          )}
+
+          {hasPermission('qc') && (
+            <SidebarMenuItem
+              to='/qc'
+              icon='shield-tick'
+              title='QC Test Reports'
+              fontIcon='bi-shield-check'
+            />
+          )}
+
+          {hasPermission('calibration') && (
+            <SidebarMenuItem
+              to='/calibration'
+              icon='award'
+              title='Calibration Lab'
+              fontIcon='bi-clipboard-check'
+            />
+          )}
+
+          {hasPermission('amc') && (
+            <SidebarMenuItem
+              to='/amc'
+              icon='wrench'
+              title='Service & AMC'
+              fontIcon='bi-tools'
+            />
+          )}
+
+          {hasPermission('purchase') && (
+            <SidebarMenuItem
+              to='/purchase'
+              icon='basket'
+              title='Purchase Requisitions'
+              fontIcon='bi-cart'
+            />
+          )}
+
+          {hasPermission('store') && (
+            <SidebarMenuItem
+              to='/store'
+              icon='archive'
+              title='Store & Inventory'
+              fontIcon='bi-box-seam'
+            />
+          )}
+
+          {hasPermission('users') && (
+            <SidebarMenuItem
+              to='/users'
+              icon='profile-user'
+              title='User Management'
+              fontIcon='bi-people'
+            />
+          )}
         </>
       )}
     </>

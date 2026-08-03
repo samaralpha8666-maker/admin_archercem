@@ -221,3 +221,20 @@ export function updateBrand(id: string | number, brandData: any) {
 export function deleteBrand(id: string | number) {
   return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/brands/${id}`)
 }
+
+// --- User Management API Requests ---
+export function getUsers() {
+  return axios.get<{ success: boolean; users: UserModel[] }>(`${API_URL}/tenant/users`)
+}
+
+export function createUser(userData: Partial<UserModel>) {
+  return axios.post<{ success: boolean; message?: string; user: UserModel }>(`${API_URL}/tenant/users`, userData)
+}
+
+export function updateUser(id: number | string, userData: Partial<UserModel>) {
+  return axios.put<{ success: boolean; message?: string; user: UserModel }>(`${API_URL}/tenant/users/${id}`, userData)
+}
+
+export function deleteUser(id: number | string) {
+  return axios.delete<{ success: boolean; message?: string }>(`${API_URL}/tenant/users/${id}`)
+}

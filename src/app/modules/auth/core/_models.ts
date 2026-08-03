@@ -48,7 +48,9 @@ export interface UserModel {
   id: number
   name: string
   email: string
-  role: 'super_admin' | 'admin' | 'manager' | 'staff' | string
+  role: 'super_admin' | 'admin' | 'manager' | 'rnd' | 'service' | 'accounts' | 'store' | 'custom' | string
+  department?: string
+  is_active?: boolean
   gemini_api_key?: string
   openai_api_key?: string
   grok_api_key?: string
