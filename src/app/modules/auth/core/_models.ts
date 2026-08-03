@@ -200,3 +200,26 @@ export interface DocumentModel {
   }
 }
 
+export interface PurchaseRequisitionItem {
+  srNo?: number
+  description: string
+  qty: string
+}
+
+export interface PurchaseRequisitionModel {
+  id?: number | string
+  prNo: string
+  date: string
+  department?: string
+  fulfillmentDate?: string
+  preferredVendor?: string
+  branch?: string
+  status?: 'pending' | 'approved' | 'rejected' | 'completed' | string
+  items: PurchaseRequisitionItem[]
+  notes?: string
+  requisitionBy?: string
+  approvedBy?: string
+  createdAt?: string
+  updatedAt?: string
+}
+

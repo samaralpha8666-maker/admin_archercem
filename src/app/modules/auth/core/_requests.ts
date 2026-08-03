@@ -238,3 +238,22 @@ export function updateUser(id: number | string, userData: Partial<UserModel>) {
 export function deleteUser(id: number | string) {
   return axios.delete<{ success: boolean; message?: string }>(`${API_URL}/tenant/users/${id}`)
 }
+
+// --- Purchase Requisitions API Requests ---
+export function getPurchaseRequisitions(branch?: string) {
+  return axios.get<{ success: boolean; requisitions: any[] }>(`${API_URL}/tenant/purchase`, {
+    params: { branch }
+  })
+}
+
+export function createPurchaseRequisition(prData: any) {
+  return axios.post<{ success: boolean; requisition: any }>(`${API_URL}/tenant/purchase`, prData)
+}
+
+export function updatePurchaseRequisition(id: string | number, prData: any) {
+  return axios.put<{ success: boolean; requisition: any }>(`${API_URL}/tenant/purchase/${id}`, prData)
+}
+
+export function deletePurchaseRequisition(id: string | number) {
+  return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/purchase/${id}`)
+}

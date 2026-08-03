@@ -1,6 +1,7 @@
 import { FC, useState, useEffect, Fragment } from 'react'
 import { PageTitle } from '../../../_metronic/layout/core'
 import { Content } from '../../../_metronic/layout/components/content'
+import { toAbsoluteUrl } from '../../../_metronic/helpers'
 import { getOifs, createOif, updateOif } from '../auth/core/_requests'
 import { toast } from 'react-hot-toast'
 
@@ -62,6 +63,165 @@ const OIFPage: FC = () => {
 
   // Selected theme for print layout
   const [printTheme, setPrintTheme] = useState<'Radwag' | 'ADRA' | 'Archerchem' | 'Tapson'>('Archerchem')
+
+  // Theme Coloring Helper
+  const getThemeStyles = (themeName: string) => {
+    switch (themeName.toLowerCase()) {
+      case 'radwag':
+        return { accent: '#2e7d32', bg: '#f0fdf4', text: '#2e7d32', title: 'RADWAG WEIGHING SYSTEMS' }
+      case 'adra':
+        return { accent: '#6b21a8', bg: '#faf5ff', text: '#6b21a8', title: 'ADRA INSTRUMENTS' }
+      case 'tapson':
+        return { accent: '#ea580c', bg: '#fff7ed', text: '#ea580c', title: 'TAPSON ANALYTICS' }
+      default:
+        return { accent: '#1a2b6b', bg: '#f0f3ff', text: '#1a2b6b', title: 'ARCHERCHEM INSTRUMENTS' }
+    }
+  }
+
+  const executePrintOIF = (targetOif?: OIFRecord | any, themeName?: string) => {
+    const oifData = targetOif || selectedOIF || formData
+    const theme = themeName || printTheme || oifData.brand || 'Archerchem'
+    const tStyle = getThemeStyles(theme)
+    const accent = tStyle.accent
+    const brandTitle = tStyle.title
+    const prods = oifData.products && oifData.products.length ? oifData.products : [{}]
+    let specRows = ''
+
+    prods.forEach((p: any, i: number) => {
+      const extraCount = (p.display ? 1 : 0) + (p.instruction ? 1 : 0)
+      const rowSpan = 4 + extraCount
+      specRows += `
+        <tr>
+          <td class="sr-cell" rowspan="${rowSpan}">${i + 1}</td>
+          <td class="lbl-cell">Model</td>
+          <td class="val-cell">${p.model || ''}</td>
+        </tr>
+        <tr><td class="lbl-cell">Capacity</td><td class="val-cell">${p.capacity || ''}</td></tr>
+        <tr><td class="lbl-cell">Readability</td><td class="val-cell">${p.readability || ''}</td></tr>
+        <tr><td class="lbl-cell">Overall Dimension of Pan or P/F (L x W x H)</td><td class="val-cell">${p.dimension || ''}</td></tr>`
+      if (p.display) {
+        specRows += `<tr><td class="lbl-cell">Display</td><td class="val-cell">${p.display}</td></tr>`
+      }
+      if (p.instruction) {
+        specRows += `<tr><td class="lbl-cell instr-lbl">Special Instruction</td><td class="val-cell instr-val">${p.instruction}</td></tr>`
+      }
+    })
+
+    const footRows = [
+      ['Separate Pole / Attached Pole', oifData.pole],
+      ['Printer (TVS/Epson)', oifData.printer],
+      ['Stamping', oifData.stamping],
+      ['Transport (Payable by – Client / ADRA)', oifData.transport],
+      ['Transport (By Hand/Road/Air/Train)', ''],
+      ['Courier / Transport to be used', oifData.courier],
+      ['Remarks', oifData.remarks],
+    ]
+    footRows.forEach(([lbl, val]) => {
+      specRows += `<tr><td class="sr-cell"></td><td class="lbl-cell">${lbl}</td><td class="val-cell">${val || ''}</td></tr>`
+    })
+
+    const logoUrl = toAbsoluteUrl('media/logos/archerchem.png')
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${oifData.oifNo || 'OIF-001'}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif;color:#1a1a2e;padding:18px;font-size:11px;background:#fff}
+    .sheet{border:2px solid ${accent};border-radius:8px;padding:20px;max-width:700px;margin:0 auto;background:#fff}
+    .hdr-row{display:flex;align-items:center;gap:15px;border-bottom:2px solid ${accent};padding-bottom:10px;margin-bottom:10px}
+    .logo-img{max-height:55px;width:auto;object-fit:contain}
+    .hdr-info{flex:1;text-align:center}
+    .hdr-info h1{font-size:18px;font-weight:900;color:${accent};font-family:Georgia,serif;letter-spacing:0.5px;margin-bottom:3px}
+    .hdr-info p{font-size:8.5px;color:#444;margin-bottom:3px;font-weight:600}
+    .hdr-info .contacts{display:flex;justify-content:center;gap:16px;font-size:8px;color:#444;font-weight:600}
+    .title-banner{background:${accent};color:#fff;text-align:center;padding:8px;font-size:14px;font-weight:900;letter-spacing:1.5px;border-radius:4px;margin:12px 0 16px;text-transform:uppercase}
+    .od-bar{background:${accent};color:#fff;font-size:11px;font-weight:800;letter-spacing:.5px;padding:6px 12px;border-radius:4px;display:inline-block;margin-bottom:8px;text-transform:uppercase}
+    .od-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid ${accent};border-radius:6px;margin-bottom:14px;overflow:hidden;background:#f8fafc}
+    .od-cell{padding:8px 12px;border-bottom:1px solid #cbd5e1;border-right:1px solid #cbd5e1;font-size:11px;display:flex;align-items:center;gap:8px}
+    .od-cell:nth-child(2n){border-right:none}
+    .od-cell b{color:${accent};white-space:nowrap;font-weight:800}
+    .od-cell .ln{flex:1;border-bottom:1px dotted #94a3b8;min-height:14px;font-weight:700;color:#0f172a}
+    table.spec{width:100%;border-collapse:collapse;margin-bottom:14px}
+    table.spec thead th{background:${accent};color:#fff;font-size:10.5px;font-weight:800;padding:7px 10px;text-align:left;border:1px solid ${accent}}
+    table.spec td{border:1px solid #cbd5e1;padding:6px 10px;font-size:10.5px;vertical-align:top}
+    .sr-cell{width:36px;text-align:center;font-weight:800;vertical-align:middle;background:#f1f5f9;color:#0f172a}
+    .lbl-cell{width:240px;color:#334155;font-weight:700}
+    .val-cell{font-weight:600;color:#0f172a}
+    .instr-lbl{color:${accent};font-weight:800}
+    .instr-val{font-style:italic;background:#fffbea;color:#854d0e}
+    .sign-box{border:1px solid ${accent};border-radius:6px;padding:12px 16px;margin-top:10px;background:#f8fafc}
+    .sign-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:11px;font-weight:700;color:#334155}
+    .sign-row .ln{flex:1;border-bottom:1px solid #94a3b8;min-height:16px;font-weight:700;color:#0f172a}
+    @media print{
+      body{padding:0;background:#fff}
+      .sheet{border-width:1.5px;max-width:100%;border-radius:0;box-shadow:none}
+      @page{size:A4 portrait;margin:8mm}
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="hdr-row">
+      <img src="${logoUrl}" class="logo-img" alt="Archerchem Logo">
+      <div class="hdr-info">
+        <h1>${brandTitle}</h1>
+        <p>ANMOL INDUSTRIAL ESTATE-2, GALA NO. 8 & 9, DHANYA SATIVALI NAGARI, VASAI (EAST) - 401208</p>
+        <div class="contacts">
+          <span>✉ sales@adra-ai.com</span>
+          <span>📞 72088 36187</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="title-banner">ORDER INTIMATION FORM</div>
+
+    <div class="od-bar">ORDER DETAILS</div>
+    <div class="od-grid">
+      <div class="od-cell"><b>OIE :</b><span class="ln">${oifData.oifNo || ''}</span></div>
+      <div class="od-cell"><b>PO. NO. :</b><span class="ln">${oifData.poNo || ''}</span></div>
+      <div class="od-cell"><b>ORDER DATE :</b><span class="ln">${oifData.orderDate || ''}</span></div>
+      <div class="od-cell"><b>DISPATCH DATE :</b><span class="ln">${oifData.dispatchDate || ''}</span></div>
+    </div>
+
+    <table class="spec">
+      <thead>
+        <tr>
+          <th style="width:36px">Sr. No.</th>
+          <th style="width:240px">Details</th>
+          <th>Information / Specification</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${specRows}
+      </tbody>
+    </table>
+
+    <div class="sign-box">
+      <div class="sign-row"><span style="width:60px">Name</span>:<span class="ln">${oifData.preparedBy || ''}</span></div>
+      <div class="sign-row"><span style="width:60px">Date</span>:<span class="ln">${oifData.prepDate || ''}</span></div>
+      <div class="sign-row"><span style="width:60px">Sign</span>:<span class="ln">${oifData.sign || ''}</span></div>
+    </div>
+  </div>
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 300);
+    };
+  </script>
+</body>
+</html>`
+
+    const printWindow = window.open('', '_blank', 'width=850,height=1100')
+    if (printWindow) {
+      printWindow.document.open()
+      printWindow.document.write(html)
+      printWindow.document.close()
+    }
+  }
 
   const fetchOifs = async () => {
     setLoading(true)
@@ -179,20 +339,6 @@ const OIFPage: FC = () => {
       o.customer.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesStatus && matchesSearch
   })
-
-  // Theme Coloring Helper
-  const getThemeStyles = (themeName: string) => {
-    switch (themeName.toLowerCase()) {
-      case 'radwag':
-        return { accent: '#ea580c', bg: '#fff7ed', text: '#ea580c' }
-      case 'adra':
-        return { accent: '#0d9488', bg: '#f0fdfa', text: '#0d9488' }
-      case 'tapson':
-        return { accent: '#d97706', bg: '#fef3c7', text: '#d97706' }
-      default:
-        return { accent: '#3730a3', bg: '#e0e7ff', text: '#3730a3' }
-    }
-  }
 
   return (
     <>
@@ -931,10 +1077,10 @@ const OIFPage: FC = () => {
                   </div>
 
                   <button
-                    onClick={() => window.print()}
+                    onClick={() => executePrintOIF(selectedOIF)}
                     className='btn btn-primary fw-bold w-100 mt-2'
                   >
-                    <i className='bi bi-printer fs-4 me-2'></i> Open Print Panel
+                    <i className='bi bi-printer fs-4 me-2'></i> Print / Download PDF
                   </button>
 
                   <button
@@ -991,247 +1137,234 @@ const OIFPage: FC = () => {
               </div>
             </div>
 
-            {/* Print Sheet visual wrapper */}
+            {/* Print Sheet visual wrapper (Pixel-Perfect matching archerchem-erp 2) */}
             <div className='col-lg-8' id='printable-area'>
               <div
                 className='card bg-white shadow-lg'
                 style={{
-                  minHeight: '297mm', // A4 aspect height ratio
-                  fontFamily: "Arial, sans-serif",
-                  color: '#222',
+                  minHeight: '297mm',
+                  fontFamily: 'Arial, sans-serif',
+                  color: '#1a1a2e',
                   border: `2px solid ${getThemeStyles(printTheme).accent}`,
-                  padding: '40px',
+                  padding: '30px',
                   borderRadius: '8px'
                 }}
               >
-                {/* Header */}
-                <div className='text-center mb-8'>
-                  <h1
-                    className='fw-bold text-uppercase m-0'
-                    style={{
-                      color: getThemeStyles(printTheme).accent,
-                      fontSize: '24px',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {printTheme === 'Radwag'
-                      ? 'Radwag Weighing Systems'
-                      : printTheme === 'ADRA'
-                      ? 'ADRA Instruments'
-                      : printTheme === 'Tapson'
-                      ? 'Tapson Analytics'
-                      : 'Archerchem Instruments'}
-                  </h1>
-                  <h5
-                    className='fw-bold m-0 mt-1'
-                    style={{
-                      color: getThemeStyles(printTheme).accent,
-                      fontSize: '14px',
-                    }}
-                  >
-                    {printTheme === 'Radwag' ? 'Mumbai · Andheri HQ' : 'Vasai Factory'}
-                  </h5>
-                  <h4
-                    className='fw-semibold text-uppercase mt-6 mb-2 text-center'
-                    style={{
-                      color: '#94a3b8',
-                      fontSize: '15px',
-                      letterSpacing: '1px',
-                    }}
-                  >
-                    ORDER INTIMATION FORM
-                  </h4>
+                {/* Top Company Header */}
+                <div
+                  className='d-flex align-items-center gap-4 pb-3 mb-3'
+                  style={{ borderBottom: `2px solid ${getThemeStyles(printTheme).accent}` }}
+                >
+                  <img
+                    src={toAbsoluteUrl('media/logos/archerchem.png')}
+                    alt='Archerchem Logo'
+                    style={{ maxHeight: '55px', width: 'auto', objectFit: 'contain' }}
+                  />
+                  <div className='flex-grow-1 text-center'>
+                    <h1
+                      className='fw-black text-uppercase m-0'
+                      style={{
+                        color: getThemeStyles(printTheme).accent,
+                        fontSize: '20px',
+                        fontFamily: 'Georgia, serif',
+                        letterSpacing: '0.5px'
+                      }}
+                    >
+                      ARCHERCHEM INSTRUMENTS
+                    </h1>
+                    <p className='m-0 text-gray-700 fw-bold' style={{ fontSize: '10px' }}>
+                      ANMOL INDUSTRIAL ESTATE-2, GALA NO. 8 & 9, DHANYA SATIVALI NAGARI, VASAI (EAST) - 401208
+                    </p>
+                    <div className='d-flex justify-content-center gap-4 text-gray-600 fw-bold mt-1' style={{ fontSize: '9.5px' }}>
+                      <span>✉ sales@adra-ai.com</span>
+                      <span>📞 72088 36187</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Order Details block */}
-                <div className='mb-6'>
-                  <span className='fw-bold text-uppercase fs-8 text-gray-500 d-block mb-2'>
-                    ORDER DETAILS
-                  </span>
+                {/* Title Banner */}
+                <div
+                  className='text-white text-center py-2 px-4 rounded-2 fw-black mb-4'
+                  style={{
+                    backgroundColor: getThemeStyles(printTheme).accent,
+                    fontSize: '15px',
+                    letterSpacing: '1.5px'
+                  }}
+                >
+                  ORDER INTIMATION FORM
+                </div>
+
+                {/* Order Details Grid */}
+                <div className='mb-4'>
                   <div
-                    className='border rounded-3 p-4'
-                    style={{borderColor: '#cbd5e1', backgroundColor: '#f8f9fa'}}
+                    className='text-white fw-extrabold px-3 py-1 rounded-1 mb-2 d-inline-block'
+                    style={{ backgroundColor: getThemeStyles(printTheme).accent, fontSize: '11px', letterSpacing: '0.5px' }}
                   >
-                    <div className='row align-items-center'>
-                      <div className='col-6'>
-                        <span className='fw-semibold text-muted'>OIE : </span>
-                        <strong className='text-gray-800 fs-7'>{selectedOIF.oifNo}</strong>
+                    ORDER DETAILS
+                  </div>
+
+                  <div
+                    className='rounded-3 overflow-hidden border'
+                    style={{ borderColor: getThemeStyles(printTheme).accent, backgroundColor: '#f8fafc' }}
+                  >
+                    <div className='row g-0'>
+                      <div className='col-6 p-3 border-bottom border-end border-gray-300 d-flex align-items-center gap-2' style={{ fontSize: '11px' }}>
+                        <b style={{ color: getThemeStyles(printTheme).accent, whiteSpace: 'nowrap' }}>OIE :</b>
+                        <span className='flex-grow-1 border-bottom border-secondary border-dotted fw-bold text-gray-900 px-1'>
+                          {selectedOIF.oifNo}
+                        </span>
                       </div>
-                      <div className='col-6'>
-                        <span className='fw-semibold text-muted'>PO. NO. : </span>
-                        <strong className='text-gray-800 fs-7'>{selectedOIF.poNo || '—'}</strong>
+                      <div className='col-6 p-3 border-bottom border-gray-300 d-flex align-items-center gap-2' style={{ fontSize: '11px' }}>
+                        <b style={{ color: getThemeStyles(printTheme).accent, whiteSpace: 'nowrap' }}>PO. NO. :</b>
+                        <span className='flex-grow-1 border-bottom border-secondary border-dotted fw-bold text-gray-900 px-1'>
+                          {selectedOIF.poNo || '—'}
+                        </span>
                       </div>
-                    </div>
-                    <div
-                      className='border-top border-dashed my-3'
-                      style={{borderColor: '#cbd5e1'}}
-                    ></div>
-                    <div className='row align-items-center'>
-                      <div className='col-6'>
-                        <span className='fw-semibold text-muted'>ORDER DATE : </span>
-                        <strong className='text-gray-800 fs-7'>{selectedOIF.orderDate}</strong>
+                      <div className='col-6 p-3 border-end border-gray-300 d-flex align-items-center gap-2' style={{ fontSize: '11px' }}>
+                        <b style={{ color: getThemeStyles(printTheme).accent, whiteSpace: 'nowrap' }}>ORDER DATE :</b>
+                        <span className='flex-grow-1 border-bottom border-secondary border-dotted fw-bold text-gray-900 px-1'>
+                          {selectedOIF.orderDate}
+                        </span>
                       </div>
-                      <div className='col-6'>
-                        <span className='fw-semibold text-muted'>DISPATCH DATE : </span>
-                        <strong className='text-gray-800 fs-7'>{selectedOIF.dispatchDate || '—'}</strong>
+                      <div className='col-6 p-3 d-flex align-items-center gap-2' style={{ fontSize: '11px' }}>
+                        <b style={{ color: getThemeStyles(printTheme).accent, whiteSpace: 'nowrap' }}>DISPATCH DATE :</b>
+                        <span className='flex-grow-1 border-bottom border-secondary border-dotted fw-bold text-gray-900 px-1'>
+                          {selectedOIF.dispatchDate || '—'}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Table: Products + Checklist */}
-                <div className='mb-6 table-responsive'>
+                {/* Table: Products + Specifications */}
+                <div className='mb-4 table-responsive'>
                   <table
-                    className='table table-bordered align-middle gs-4 gy-3 fs-7'
-                    style={{
-                      borderColor: '#cbd5e1',
-                      borderCollapse: 'collapse',
-                    }}
+                    className='table table-bordered align-middle gs-4 gy-2 mb-0'
+                    style={{ borderColor: '#cbd5e1', borderCollapse: 'collapse', fontSize: '11px' }}
                   >
                     <thead>
                       <tr
-                        className='fw-bold text-gray-500 bg-light'
-                        style={{
-                          fontSize: '11px',
-                          borderBottom: '2px solid #cbd5e1',
-                        }}
+                        className='text-white fw-extrabold'
+                        style={{ backgroundColor: getThemeStyles(printTheme).accent, fontSize: '11px' }}
                       >
-                        <th style={{width: '60px'}} className='text-center'>
-                          Sr. No.
-                        </th>
-                        <th style={{width: '320px'}}>Details</th>
+                        <th style={{ width: '36px' }} className='text-center'>Sr. No.</th>
+                        <th style={{ width: '230px' }}>Details</th>
                         <th>Information / Specification</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedOIF.products.map((p, idx) => (
-                        <Fragment key={idx}>
-                          {/* Model row */}
-                          <tr
-                            className='border-bottom'
-                            style={{
-                              borderTop: idx > 0 ? '2px solid #cbd5e1' : 'none',
-                            }}
-                          >
-                            <td
-                              className='text-center fw-bold text-dark'
-                              rowSpan={p.instruction ? 6 : 5}
-                              style={{
-                                verticalAlign: 'top',
-                                paddingTop: '10px',
-                              }}
-                            >
-                              {idx + 1}
-                            </td>
-                            <td className='fw-bold text-gray-800'>Model</td>
-                            <td className='fw-bold text-gray-800'>{p.model}</td>
-                          </tr>
-                          <tr className='border-bottom'>
-                            <td className='text-muted'>Capacity</td>
-                            <td>{p.capacity || '—'}</td>
-                          </tr>
-                          <tr className='border-bottom'>
-                            <td className='text-muted'>Readability</td>
-                            <td>{p.readability || '—'}</td>
-                          </tr>
-                          <tr className='border-bottom'>
-                            <td className='text-muted'>
-                              Overall Dimension of Pan or P/F (L x W x H)
-                            </td>
-                            <td>{p.dimension || '—'}</td>
-                          </tr>
-                          <tr className='border-bottom'>
-                            <td className='text-muted'>Display</td>
-                            <td>{p.display || '—'}</td>
-                          </tr>
-                          {p.instruction && (
-                            <tr className='border-bottom'>
-                              <td className='text-muted fw-semibold'>Special Instruction</td>
-                              <td className='text-muted italic'>{p.instruction}</td>
-                            </tr>
-                          )}
-                        </Fragment>
-                      ))}
+                      {selectedOIF.products.map((p, idx) => {
+                        const extraCount = (p.display ? 1 : 0) + (p.instruction ? 1 : 0)
+                        const rowSpan = 4 + extraCount
 
-                      {/* Checklist options */}
-                      <tr
-                        className='border-bottom'
-                        style={{borderTop: '2px solid #cbd5e1'}}
-                      >
-                        <td></td>
-                        <td className='text-muted'>Separate Pole / Attached Pole</td>
-                        <td className='fw-bold'>{selectedOIF.pole}</td>
+                        return (
+                          <Fragment key={idx}>
+                            <tr>
+                              <td
+                                className='text-center fw-black text-dark bg-light'
+                                rowSpan={rowSpan}
+                                style={{ verticalAlign: 'middle', width: '36px' }}
+                              >
+                                {idx + 1}
+                              </td>
+                              <td className='fw-bold text-gray-800' style={{ width: '230px' }}>Model</td>
+                              <td className='fw-bold text-gray-900'>{p.model}</td>
+                            </tr>
+                            <tr>
+                              <td className='text-gray-700 fw-semibold'>Capacity</td>
+                              <td className='fw-semibold text-gray-900'>{p.capacity || '—'}</td>
+                            </tr>
+                            <tr>
+                              <td className='text-gray-700 fw-semibold'>Readability</td>
+                              <td className='fw-semibold text-gray-900'>{p.readability || '—'}</td>
+                            </tr>
+                            <tr>
+                              <td className='text-gray-700 fw-semibold'>Overall Dimension of Pan or P/F (L x W x H)</td>
+                              <td className='fw-semibold text-gray-900'>{p.dimension || '—'}</td>
+                            </tr>
+                            {p.display && (
+                              <tr>
+                                <td className='text-gray-700 fw-semibold'>Display</td>
+                                <td className='fw-semibold text-gray-900'>{p.display}</td>
+                              </tr>
+                            )}
+                            {p.instruction && (
+                              <tr>
+                                <td className='fw-bold' style={{ color: getThemeStyles(printTheme).accent }}>Special Instruction</td>
+                                <td className='fst-italic text-warning-emphasis bg-light-warning px-2 py-1 rounded-1'>{p.instruction}</td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        )
+                      })}
+
+                      {/* Additional Details Footer Rows */}
+                      <tr>
+                        <td className='bg-light'></td>
+                        <td className='text-gray-700 fw-semibold'>Separate Pole / Attached Pole</td>
+                        <td className='fw-bold text-gray-900'>{selectedOIF.pole}</td>
                       </tr>
-                      <tr className='border-bottom'>
-                        <td></td>
-                        <td className='text-muted'>Printer (TVS/Epson)</td>
-                        <td className='fw-bold'>{selectedOIF.printer}</td>
+                      <tr>
+                        <td className='bg-light'></td>
+                        <td className='text-gray-700 fw-semibold'>Printer (TVS/Epson)</td>
+                        <td className='fw-bold text-gray-900'>{selectedOIF.printer}</td>
                       </tr>
-                      <tr className='border-bottom'>
-                        <td></td>
-                        <td className='text-muted'>Stamping</td>
-                        <td className='fw-bold'>{selectedOIF.stamping}</td>
+                      <tr>
+                        <td className='bg-light'></td>
+                        <td className='text-gray-700 fw-semibold'>Stamping</td>
+                        <td className='fw-bold text-gray-900'>{selectedOIF.stamping}</td>
                       </tr>
-                      <tr className='border-bottom'>
-                        <td></td>
-                        <td className='text-muted'>
-                          Transport (Payable by – Client / ADRA)
-                        </td>
-                        <td className='fw-bold'>{selectedOIF.transport || '—'}</td>
+                      <tr>
+                        <td className='bg-light'></td>
+                        <td className='text-gray-700 fw-semibold'>Transport (Payable by – Client / ADRA)</td>
+                        <td className='fw-bold text-gray-900'>{selectedOIF.transport || '—'}</td>
                       </tr>
-                      <tr className='border-bottom'>
-                        <td></td>
-                        <td className='text-muted'>Transport (By Hand/Road/Air/Train)</td>
-                        <td>—</td>
+                      <tr>
+                        <td className='bg-light'></td>
+                        <td className='text-gray-700 fw-semibold'>Transport (By Hand/Road/Air/Train)</td>
+                        <td className='fw-bold text-gray-900'>—</td>
                       </tr>
-                      <tr className='border-bottom'>
-                        <td></td>
-                        <td className='text-muted'>Courier / Transport to be used</td>
-                        <td className='fw-bold'>{selectedOIF.courier || '—'}</td>
+                      <tr>
+                        <td className='bg-light'></td>
+                        <td className='text-gray-700 fw-semibold'>Courier / Transport to be used</td>
+                        <td className='fw-bold text-gray-900'>{selectedOIF.courier || '—'}</td>
                       </tr>
-                      <tr className='border-bottom'>
-                        <td></td>
-                        <td className='text-muted'>Remarks</td>
-                        <td className='fw-bold'>{selectedOIF.remarks || '—'}</td>
+                      <tr>
+                        <td className='bg-light'></td>
+                        <td className='text-gray-700 fw-semibold'>Remarks</td>
+                        <td className='fw-bold text-gray-900'>{selectedOIF.remarks || '—'}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
-                {/* Prepared By block at the bottom */}
+                {/* Signature Box */}
                 <div
                   className='border rounded-3 p-4 mt-auto'
-                  style={{borderColor: '#cbd5e1'}}
+                  style={{ borderColor: getThemeStyles(printTheme).accent, backgroundColor: '#f8fafc' }}
                 >
-                  <div className='d-flex flex-column gap-2'>
+                  <div className='d-flex flex-column gap-2' style={{ fontSize: '11px' }}>
                     <div className='row align-items-center'>
-                      <div className='col-3 text-muted fw-semibold'>Name</div>
-                      <div className='col-9 text-gray-800 fw-bold'>
+                      <div className='col-3 text-gray-700 fw-bold'>Name</div>
+                      <div className='col-9 text-gray-900 fw-bolder border-bottom border-gray-400 pb-1'>
                         : {selectedOIF.preparedBy}
                       </div>
                     </div>
-                    <div
-                      className='border-top border-gray-200 my-2'
-                      style={{borderTopStyle: 'dashed'}}
-                    ></div>
                     <div className='row align-items-center'>
-                      <div className='col-3 text-muted fw-semibold'>Date</div>
-                      <div className='col-9 text-gray-800 fw-bold'>
+                      <div className='col-3 text-gray-700 fw-bold'>Date</div>
+                      <div className='col-9 text-gray-900 fw-bolder border-bottom border-gray-400 pb-1'>
                         : {selectedOIF.prepDate}
                       </div>
                     </div>
-                    <div
-                      className='border-top border-gray-200 my-2'
-                      style={{borderTopStyle: 'dashed'}}
-                    ></div>
                     <div className='row align-items-center'>
-                      <div className='col-3 text-muted fw-semibold'>Sign</div>
-                      <div className='col-9 text-gray-800 fw-bold'>
+                      <div className='col-3 text-gray-700 fw-bold'>Sign</div>
+                      <div className='col-9 text-gray-900 fw-bolder border-bottom border-gray-400 pb-1'>
                         : {selectedOIF.sign || '—'}
                       </div>
                     </div>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>

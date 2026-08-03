@@ -1,10 +1,94 @@
-import { FC, useState, useEffect } from 'react'
+import { FC, useState, useEffect, useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { PageTitle } from '../../../_metronic/layout/core'
 import { Content } from '../../../_metronic/layout/components/content'
+import { KTIcon } from '../../../_metronic/helpers'
 import { useAuth } from '../../modules/auth'
 import Chart from 'react-apexcharts'
 import { Link } from 'react-router-dom'
+
+interface QuickShortcut {
+  key: string
+  title: string
+  subtitle: string
+  icon: string
+  path: string
+  badgeText?: string
+  color: 'primary' | 'success' | 'warning' | 'info' | 'danger' | 'dark'
+}
+
+const ALL_QUICK_SHORTCUTS: QuickShortcut[] = [
+  {
+    key: 'users',
+    title: 'User Management',
+    subtitle: 'Roles, RBAC & permissions',
+    icon: 'profile-user',
+    path: '/users',
+    badgeText: 'Admin',
+    color: 'primary'
+  },
+  {
+    key: 'store',
+    title: 'Store & Inventory',
+    subtitle: 'Raw materials & GRN logs',
+    icon: 'archive',
+    path: '/store',
+    badgeText: 'Stock',
+    color: 'success'
+  },
+  {
+    key: 'purchase',
+    title: 'Purchase Requisitions',
+    subtitle: 'Track PRs, POs & quotes',
+    icon: 'basket',
+    path: '/purchase',
+    badgeText: 'Orders',
+    color: 'warning'
+  },
+  {
+    key: 'qc',
+    title: 'QC Test Reports',
+    subtitle: 'Scale inspection test logs',
+    icon: 'shield-tick',
+    path: '/qc',
+    badgeText: 'QA/QC',
+    color: 'info'
+  },
+  {
+    key: 'calibration',
+    title: 'Calibration Lab',
+    subtitle: 'ISO 17025 certificates',
+    icon: 'award',
+    path: '/calibration',
+    badgeText: 'ISO 17025',
+    color: 'primary'
+  },
+  {
+    key: 'amc',
+    title: 'Service & AMC',
+    subtitle: 'AMC contracts & service',
+    icon: 'wrench',
+    path: '/amc',
+    badgeText: 'Service',
+    color: 'danger'
+  },
+  {
+    key: 'oif',
+    title: 'Order Intimation (OIF)',
+    subtitle: 'Order intimations & dispatch',
+    icon: 'briefcase',
+    path: '/oif',
+    color: 'dark'
+  },
+  {
+    key: 'electronics',
+    title: 'Electronics Material',
+    subtitle: 'PCB boards & load cells',
+    icon: 'cpu',
+    path: '/electronics',
+    color: 'info'
+  }
+]
 
 const DashboardPage: FC = () => {
   const { currentUser } = useAuth()
@@ -22,49 +106,66 @@ const DashboardPage: FC = () => {
     }
   }, [])
 
-  // ApexCharts config for Brand-wise Stock Donut
-  const donutChartOptions = {
-    chart: {
-      type: 'donut' as const,
-      fontFamily: 'inherit',
-    },
-    labels: ['Archerchem', 'Radwag', 'Tapson', 'ADRA'],
-    colors: ['#3730a3', '#0284c7', '#d97706', '#7c3aed'],
-    stroke: {
-      show: true,
-      width: 2,
-      colors: ['transparent'],
-    },
-    legend: {
-      show: false,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    tooltip: {
-      style: {
-        fontSize: '12px',
-      },
-    },
+  // Check permission helper
+  const hasPermission = (moduleKey: string) => {
+    if (!currentUser) return false
+    if (currentUser.role === 'admin' || currentUser.role === 'super_admin') return true
+    const perms = currentUser.permissions || []
+    return perms.includes(moduleKey)
   }
 
-  const donutChartSeries = [85.4, 62.1, 48.8, 32.5] // values in Lakhs (total 228.8L ≈ 2.29Cr)
+  // Filter allowed shortcuts
+  const userShortcuts = useMemo(() => {
+    return ALL_QUICK_SHORTCUTS.filter((s) => hasPermission(s.key))
+  }, [currentUser])
 
-  // ApexCharts config for Weight Matching Accuracy trend
+  // Donut Chart - Brand Allocation
+  const donutChartOptions = {
+    chart: { type: 'donut' as const, fontFamily: 'inherit' },
+    labels: ['Archerchem', 'Radwag', 'Tapson', 'ADRA'],
+    colors: ['#4f46e5', '#0284c7', '#f59e0b', '#8b5cf6'],
+    stroke: { show: true, width: 2, colors: ['#ffffff'] },
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '72%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total Stock',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#64748b',
+              formatter: () => '₹2.45Cr'
+            }
+          }
+        }
+      }
+    },
+    tooltip: { style: { fontSize: '12px' } }
+  }
+
+  const donutChartSeries = [85.4, 62.1, 48.8, 32.5]
+
+  // Line Chart - Scale Calibration Accuracy Trend
   const lineChartOptions = {
     chart: {
       type: 'area' as const,
       toolbar: { show: false },
       fontFamily: 'inherit',
+      sparkline: { enabled: false }
     },
     dataLabels: { enabled: false },
-    stroke: { curve: 'smooth' as const, width: 3 },
+    stroke: { curve: 'smooth' as const, width: 3.5 },
     colors: ['#10b981'],
     fill: {
       type: 'gradient',
       gradient: {
         shadeIntensity: 1,
-        opacityFrom: 0.3,
+        opacityFrom: 0.35,
         opacityTo: 0.05,
         stops: [0, 90, 100]
       }
@@ -73,15 +174,15 @@ const DashboardPage: FC = () => {
       categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
       axisBorder: { show: false },
       axisTicks: { show: false },
-      labels: { style: { colors: '#a1a5b7', fontSize: '12px' } }
+      labels: { style: { colors: '#64748b', fontSize: '12px', fontWeight: 600 } }
     },
     yaxis: {
-      min: 99.5,
+      min: 99.7,
       max: 100.0,
-      labels: { style: { colors: '#a1a5b7', fontSize: '12px' } }
+      labels: { style: { colors: '#64748b', fontSize: '12px', fontWeight: 600 } }
     },
     grid: {
-      borderColor: '#eff2f5',
+      borderColor: '#f1f5f9',
       strokeDashArray: 4,
       yaxis: { lines: { show: true } }
     }
@@ -90,402 +191,411 @@ const DashboardPage: FC = () => {
   const lineChartSeries = [
     {
       name: 'Accuracy %',
-      data: [99.88, 99.92, 99.85, 99.97, 99.94, 99.99, 99.96]
+      data: [99.85, 99.91, 99.88, 99.96, 99.94, 99.98, 99.96]
     }
   ]
 
-  // Recent Weight Matching Checks data
-  const weightChecks = [
-    { model: 'AE-1000', serial: 'AC-98721', std: '500g', obs: '500.02g', dev: '+0.02g', accuracy: '99.996%', status: 'Passed', badge: 'success' },
-    { model: 'WPS-500', serial: 'RW-22104', std: '250g', obs: '249.98g', dev: '-0.02g', accuracy: '99.992%', status: 'Passed', badge: 'success' },
-    { model: 'TP-2000', serial: 'TP-38012', std: '1000g', obs: '1000.41g', dev: '+0.41g', accuracy: '99.959%', status: 'Passed', badge: 'success' },
-    { model: 'AD-3000', serial: 'AD-15093', std: '1500g', obs: '1500.82g', dev: '+0.82g', accuracy: '99.945%', status: 'Fail (Tol ±0.5g)', badge: 'danger' },
-    { model: 'AE-5000', serial: 'AC-98944', std: '2000g', obs: '2000.05g', dev: '+0.05g', accuracy: '99.997%', status: 'Passed', badge: 'success' }
+  // Recent Scale Inspections Table
+  const recentInspections = [
+    { model: 'AE-1000 Micro Balance', serial: 'AC-98721', std: '500.00g', obs: '500.01g', dev: '+0.01g', accuracy: '99.998%', status: 'Passed', badge: 'success' },
+    { model: 'Radwag WPS-500', serial: 'RW-22104', std: '250.00g', obs: '249.98g', dev: '-0.02g', accuracy: '99.992%', status: 'Passed', badge: 'success' },
+    { model: 'Tapson TP-2000', serial: 'TP-38012', std: '1000.00g', obs: '1000.35g', dev: '+0.35g', accuracy: '99.965%', status: 'Passed', badge: 'success' },
+    { model: 'ADRA AD-3000', serial: 'AD-15093', std: '1500.00g', obs: '1500.82g', dev: '+0.82g', accuracy: '99.945%', status: 'Tolerance Warning', badge: 'warning' },
+    { model: 'Archerchem AE-5000', serial: 'AC-98944', std: '2000.00g', obs: '2000.04g', dev: '+0.04g', accuracy: '99.998%', status: 'Passed', badge: 'success' }
+  ]
+
+  // System Live Activity Log
+  const activityLogs = [
+    { time: '10 mins ago', type: 'GRN Received', title: 'Vasai Store received 50 Pcs Radwag Load Cell Sensors.', icon: 'archive', color: 'success' },
+    { time: '25 mins ago', type: 'PR Approval', title: 'PR-2026-042 (Micro IC Chips) approved by Management.', icon: 'basket', color: 'primary' },
+    { time: '1 hour ago', type: 'QC Certified', title: 'QC Inspection Certificate issued for Scale AE-1000.', icon: 'shield-tick', color: 'info' },
+    { time: '2 hours ago', type: 'User Added', title: 'New Store Manager account (store866@gmail.com) activated.', icon: 'profile-user', color: 'warning' }
   ]
 
   return (
-    <div className='row g-5 g-xl-10'>
-      {/* 1. Welcome Card Banner */}
-      <div className='col-12 mb-md-5 mb-xl-10'>
-        <div className='card card-flush h-md-100 border-0 shadow-sm' style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)' }}>
-          <div className='card-body d-flex flex-column justify-content-between p-10 bgi-no-repeat bgi-size-cover bgi-position-y-bottom'>
-            <div className='mb-10'>
-              <h3 className='fs-2hx fw-bold text-white mb-3'>
-                {currentUser?.school_name || 'Archerchem Instruments'} ERP
-              </h3>
-              <p className='text-white text-opacity-75 fw-semibold fs-5'>
-                Welcome back, {currentUser?.name || 'Administrator'}. This is the central portal for monitoring industrial weighing scales, QC test reports, calibration certificates, and store logistics.
+    <div className='d-flex flex-column gap-7'>
+
+      {/* ══ 1. HERO HEADER BANNER (Gradient & Executive Summary) ══ */}
+      <div
+        className='card border-0 rounded-4 shadow-sm position-relative overflow-hidden'
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%)',
+          color: '#ffffff'
+        }}
+      >
+        {/* Glow Effects */}
+        <div
+          className='position-absolute rounded-circle pointer-events-none'
+          style={{
+            width: '400px',
+            height: '400px',
+            top: '-100px',
+            right: '-50px',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(255,255,255,0) 70%)',
+            zIndex: 0
+          }}
+        />
+
+        <div className='card-body p-8 p-md-10 position-relative' style={{ zIndex: 1 }}>
+          <div className='d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-6'>
+            {/* Left Content */}
+            <div className='d-flex flex-column gap-3'>
+              <div className='d-flex flex-wrap align-items-center gap-3'>
+                <span className='badge bg-white bg-opacity-20 text-white px-3.5 py-2 rounded-pill fs-7 fw-bold shadow-sm'>
+                  ✨ Executive Dashboard
+                </span>
+                <span className='badge bg-success text-white px-3 py-1.5 rounded-pill fs-8 fw-bolder text-uppercase'>
+                  Role: {currentUser?.role?.toUpperCase() || 'ADMIN'}
+                </span>
+                {currentUser?.department && (
+                  <span className='badge bg-info bg-opacity-25 text-info border border-info border-opacity-25 px-3 py-1.5 rounded-pill fs-8 fw-bold'>
+                    Dept: {currentUser.department}
+                  </span>
+                )}
+              </div>
+
+              <h1 className='fs-2hx fw-extrabold text-white mb-0 tracking-tight'>
+                Welcome back, {currentUser?.name || 'Administrator'} 👋
+              </h1>
+
+              <p className='text-white text-opacity-80 fw-semibold fs-6 mb-0' style={{ maxWidth: '650px', lineHeight: 1.6 }}>
+                Archerchem Instruments Enterprise Control Hub. Real-time telemetry for weighing scale calibrations, inventory SKU movements, and multi-tenant access controls.
               </p>
             </div>
-            
-            <div className='d-flex align-items-center gap-3'>
-              <span className='badge bg-white bg-opacity-10 text-white fw-bold px-4 py-3 fs-7'>
-                Branch: {activeBranch}
-              </span>
-              <span className='badge bg-success text-white fw-bold px-4 py-3 fs-7'>
-                Scale Calibration Node: Online
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* 2. KPI Cards */}
-      <div className='col-md-3 mb-5'>
-        <div className='card card-flush h-100 border-0 bg-body shadow-sm'>
-          <div className='card-body d-flex align-items-center justify-content-between p-6'>
-            <div className='d-flex flex-column'>
-              <span className='fs-2hx fw-bold text-gray-900 lh-1 ls-n2'>₹2.45Cr</span>
-              <span className='text-gray-500 pt-1 fw-bold fs-7'>Total Stock Value</span>
-            </div>
-            <div className='symbol symbol-50px'>
-              <div className='symbol-label bg-light-primary text-primary'>
-                <i className='bi bi-coin fs-2x'></i>
+            {/* Right Status Pill Badges & Actions */}
+            <div className='d-flex flex-column align-items-start align-items-lg-end gap-3'>
+              <div className='bg-white bg-opacity-10 border border-white border-opacity-20 rounded-4 p-4 d-flex align-items-center gap-4 shadow-sm'>
+                <div className='p-3 bg-primary bg-opacity-30 rounded-circle'>
+                  <KTIcon iconName='geolocation' className='fs-1 text-cyan' />
+                </div>
+                <div className='d-flex flex-column'>
+                  <span className='text-white text-opacity-60 fs-8 fw-semibold'>Active Branch Node</span>
+                  <span className='text-white fw-bolder fs-6'>{activeBranch}</span>
+                </div>
+              </div>
+
+              <div className='d-flex align-items-center gap-2'>
+                {hasPermission('users') && (
+                  <Link to='/users' className='btn btn-sm btn-light-primary fw-bold d-flex align-items-center gap-2 shadow-sm'>
+                    <KTIcon iconName='plus' className='fs-3' /> Add User
+                  </Link>
+                )}
+                {hasPermission('store') && (
+                  <Link to='/store' className='btn btn-sm btn-primary fw-bold d-flex align-items-center gap-2 shadow-sm'>
+                    <KTIcon iconName='archive' className='fs-3' /> Store Portal
+                  </Link>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className='col-md-3 mb-5'>
-        <div className='card card-flush h-100 border-0 bg-body shadow-sm'>
-          <div className='card-body d-flex align-items-center justify-content-between p-6'>
-            <div className='d-flex flex-column'>
-              <span className='fs-2hx fw-bold text-gray-900 lh-1 ls-n2'>15</span>
-              <span className='text-gray-500 pt-1 fw-bold fs-7'>Pending PR</span>
+      {/* ══ 2. TOP METRIC STAT CARDS (4 Vibrant KPI Cards) ══ */}
+      <div className='row g-6'>
+        {/* Card 1: Total Stock Valuation */}
+        <div className='col-12 col-sm-6 col-xl-3'>
+          <div className='card card-flush h-100 border-0 shadow-sm bg-body hover-elevation-2 transition-all'>
+            <div className='card-body p-6 d-flex align-items-center justify-content-between'>
+              <div className='d-flex flex-column'>
+                <span className='text-gray-500 fw-bold fs-7 mb-1'>Total Stock Valuation</span>
+                <span className='fs-2hx fw-extrabold text-gray-900 lh-1 mb-2'>₹2.45 Cr</span>
+                <div className='d-flex align-items-center gap-1 text-success fs-8 fw-bold'>
+                  <KTIcon iconName='arrow-up' className='fs-6 text-success' />
+                  <span>+14.2% vs last month</span>
+                </div>
+              </div>
+
+              <div className='symbol symbol-55px'>
+                <div className='symbol-label bg-light-primary rounded-4 text-primary'>
+                  <KTIcon iconName='bank' className='fs-2x' />
+                </div>
+              </div>
             </div>
-            <div className='symbol symbol-50px'>
-              <div className='symbol-label bg-light-warning text-warning'>
-                <i className='bi bi-cart-check fs-2x'></i>
+          </div>
+        </div>
+
+        {/* Card 2: Active Orders / OIF */}
+        <div className='col-12 col-sm-6 col-xl-3'>
+          <div className='card card-flush h-100 border-0 shadow-sm bg-body hover-elevation-2 transition-all'>
+            <div className='card-body p-6 d-flex align-items-center justify-content-between'>
+              <div className='d-flex flex-column'>
+                <span className='text-gray-500 fw-bold fs-7 mb-1'>Active OIF Orders</span>
+                <span className='fs-2hx fw-extrabold text-gray-900 lh-1 mb-2'>148 Orders</span>
+                <div className='d-flex align-items-center gap-1 text-primary fs-8 fw-bold'>
+                  <KTIcon iconName='check-circle' className='fs-6 text-primary' />
+                  <span>96% Fulfillment Rate</span>
+                </div>
+              </div>
+
+              <div className='symbol symbol-55px'>
+                <div className='symbol-label bg-light-info rounded-4 text-info'>
+                  <KTIcon iconName='briefcase' className='fs-2x' />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Calibration Certificates */}
+        <div className='col-12 col-sm-6 col-xl-3'>
+          <div className='card card-flush h-100 border-0 shadow-sm bg-body hover-elevation-2 transition-all'>
+            <div className='card-body p-6 d-flex align-items-center justify-content-between'>
+              <div className='d-flex flex-column'>
+                <span className='text-gray-500 fw-bold fs-7 mb-1'>Calibration Certs</span>
+                <span className='fs-2hx fw-extrabold text-gray-900 lh-1 mb-2'>342 Certs</span>
+                <div className='d-flex align-items-center gap-1 text-success fs-8 fw-bold'>
+                  <KTIcon iconName='shield-tick' className='fs-6 text-success' />
+                  <span>ISO 17025 Compliant</span>
+                </div>
+              </div>
+
+              <div className='symbol symbol-55px'>
+                <div className='symbol-label bg-light-success rounded-4 text-success'>
+                  <KTIcon iconName='award' className='fs-2x' />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Active System Users */}
+        <div className='col-12 col-sm-6 col-xl-3'>
+          <div className='card card-flush h-100 border-0 shadow-sm bg-body hover-elevation-2 transition-all'>
+            <div className='card-body p-6 d-flex align-items-center justify-content-between'>
+              <div className='d-flex flex-column'>
+                <span className='text-gray-500 fw-bold fs-7 mb-1'>Tenant Users</span>
+                <span className='fs-2hx fw-extrabold text-gray-900 lh-1 mb-2'>28 Users</span>
+                <div className='d-flex align-items-center gap-1 text-warning fs-8 fw-bold'>
+                  <KTIcon iconName='profile-user' className='fs-6 text-warning' />
+                  <span>6 Preset Access Roles</span>
+                </div>
+              </div>
+
+              <div className='symbol symbol-55px'>
+                <div className='symbol-label bg-light-warning rounded-4 text-warning'>
+                  <KTIcon iconName='people' className='fs-2x' />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className='col-md-3 mb-5'>
-        <div className='card card-flush h-100 border-0 bg-body shadow-sm'>
-          <div className='card-body d-flex align-items-center justify-content-between p-6'>
+      {/* ══ 3. QUICK SHORTCUTS TOOLBAR (Module Access Links) ══ */}
+      <div className='card card-flush shadow-sm border-0'>
+        <div className='card-header pt-6 pb-2 border-0'>
+          <div className='card-title d-flex align-items-center gap-3'>
+            <span className='badge badge-light-primary p-3 rounded-circle'>
+              <KTIcon iconName='element-11' className='fs-2' />
+            </span>
             <div className='d-flex flex-column'>
-              <span className='fs-2hx fw-bold text-danger lh-1 ls-n2'>12</span>
-              <span className='text-gray-500 pt-1 fw-bold fs-7'>Low Stock items</span>
-            </div>
-            <div className='symbol symbol-50px'>
-              <div className='symbol-label bg-light-danger text-danger'>
-                <i className='bi bi-exclamation-triangle fs-2x'></i>
-              </div>
+              <h3 className='fw-bolder text-gray-900 fs-4 mb-0'>Quick Module Shortcuts</h3>
+              <span className='text-muted fs-7 fw-semibold'>Instant one-click access to authorized modules</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className='col-md-3 mb-5'>
-        <div className='card card-flush h-100 border-0 bg-body shadow-sm'>
-          <div className='card-body d-flex align-items-center justify-content-between p-6'>
-            <div className='d-flex flex-column'>
-              <span className='fs-2hx fw-bold text-success lh-1 ls-n2'>142</span>
-              <span className='text-gray-500 pt-1 fw-bold fs-7'>Active Cal. Certs</span>
-            </div>
-            <div className='symbol symbol-50px'>
-              <div className='symbol-label bg-light-success text-success'>
-                <i className='bi bi-patch-check fs-2x'></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <div className='card-body pt-2 pb-7'>
+          <div className='row g-4'>
+            {userShortcuts.map((item) => (
+              <div key={item.key} className='col-12 col-sm-6 col-md-4 col-xl-3'>
+                <Link
+                  to={item.path}
+                  className='card card-bordered h-100 p-5 text-decoration-none shadow-xs hover-elevation-3 transition-all border-dashed border-gray-300 bg-hover-light'
+                  style={{ transition: 'all 0.22s ease' }}
+                >
+                  <div className='d-flex align-items-center justify-content-between mb-4'>
+                    <span className={`badge badge-light-${item.color} p-3 rounded-3`}>
+                      <KTIcon iconName={item.icon} className='fs-2hx' />
+                    </span>
 
-      {/* 3. Weight Matching & Calibration Tracker (Main custom widget) */}
-      <div className='col-xl-8 mb-5 mb-xl-10'>
-        <div className='card card-flush h-xl-100 border-0 bg-body shadow-sm'>
-          <div className='card-header pt-7 px-8 border-0'>
-            <h3 className='card-title align-items-start flex-column'>
-              <span className='card-label fw-bold text-gray-900 fs-3'>Weight Matching & Calibration Analyzer</span>
-              <span className='text-gray-500 mt-1 fw-semibold fs-7'>Live monitoring of standard test weight matches vs balance readings</span>
-            </h3>
-            <div className='card-toolbar'>
-              <Link to='/calibration' className='btn btn-light-primary btn-sm fw-bold'>View Certificates</Link>
-            </div>
-          </div>
-
-          <div className='card-body pt-5 px-8'>
-            {/* Chart + Summary row */}
-            <div className='row align-items-center mb-6'>
-              <div className='col-md-7'>
-                <div className='d-flex align-items-center gap-6 mb-5'>
-                  <div className='border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3 bg-light'>
-                    <div className='d-flex align-items-center'>
-                      <div className='fs-2 fw-bold text-success'>99.97%</div>
-                    </div>
-                    <div className='fw-semibold fs-7 text-gray-500'>Avg matching accuracy</div>
+                    {item.badgeText && (
+                      <span className={`badge badge-light-${item.color} fw-bolder fs-8 px-2.5 py-1`}>
+                        {item.badgeText}
+                      </span>
+                    )}
                   </div>
-                  <div className='border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3 bg-light'>
-                    <div className='d-flex align-items-center'>
-                      <div className='fs-2 fw-bold text-gray-900'>±0.024g</div>
-                    </div>
-                    <div className='fw-semibold fs-7 text-gray-500'>Avg deviation offset</div>
-                  </div>
-                </div>
-                <Chart options={lineChartOptions} series={lineChartSeries} type='area' height={200} />
-              </div>
 
-              <div className='col-md-5'>
-                <div className='bg-light-success p-5 rounded d-flex flex-column gap-2 mb-4'>
-                  <div className='fw-bold text-success fs-5'>⚖️ Scale Traceability standard</div>
-                  <p className='text-gray-700 fs-7 mb-0'>
-                    Scales calibrated against standard reference weights trace to **NABL Class F1 / E2 SS Weight Boxes**. Tolerance limits are applied automatically.
-                  </p>
-                </div>
-                <div className='bg-light-danger p-5 rounded d-flex flex-column gap-2'>
-                  <div className='fw-bold text-danger fs-5'>⚠️ Calibration Warning</div>
-                  <p className='text-gray-700 fs-7 mb-0'>
-                    Instrument **Model AD-3000 (Serial AD-15093)** failed matching tolerance limit (Observed error: +0.82g vs standard limit ±0.5g). Maintenance scheduled.
-                  </p>
-                </div>
+                  <div className='d-flex flex-column'>
+                    <span className='fs-6 fw-bolder text-gray-900 text-hover-primary mb-1 d-flex align-items-center justify-content-between'>
+                      {item.title}
+                      <KTIcon iconName='arrow-right' className='fs-4 text-gray-400 ms-1' />
+                    </span>
+                    <span className='fs-8 text-gray-500 fw-semibold line-clamp-2'>
+                      {item.subtitle}
+                    </span>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ══ 4. MAIN ANALYTICS SECTION (Calibration Charts & Inventory Split) ══ */}
+      <div className='row g-6'>
+        {/* Scale Calibration Tracker */}
+        <div className='col-12 col-xl-8'>
+          <div className='card card-flush h-xl-100 border-0 shadow-sm bg-body'>
+            <div className='card-header pt-7 pb-2 border-0'>
+              <div className='card-title d-flex flex-column'>
+                <span className='card-label fw-extrabold text-gray-900 fs-3 mb-1'>
+                  Scale Calibration Accuracy & Telemetry
+                </span>
+                <span className='text-gray-500 fw-semibold fs-7'>
+                  Monthly precision tracking across micro balances (Tolerance ±0.05g to ±0.5g)
+                </span>
+              </div>
+              <div className='card-toolbar'>
+                <span className='badge badge-light-success fw-bolder fs-7 px-3 py-2'>
+                  <KTIcon iconName='shield-tick' className='fs-5 text-success me-1' />
+                  Avg Accuracy: 99.96%
+                </span>
               </div>
             </div>
 
-            {/* List of recent checks */}
-            <div className='table-responsive'>
-              <table className='table table-row-dashed table-row-gray-200 align-middle gs-0 gy-3'>
-                <thead>
-                  <tr className='fw-bold text-muted fs-7 text-uppercase'>
-                    <th className='min-w-100px'>Scale Model</th>
-                    <th className='min-w-100px'>Serial No</th>
-                    <th className='min-w-80px text-end'>Standard Applied</th>
-                    <th className='min-w-80px text-end'>Measured Reading</th>
-                    <th className='min-w-80px text-end'>Error Offset</th>
-                    <th className='min-w-80px text-end'>Match Accuracy</th>
-                    <th className='min-w-100px text-end'>Calibration Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weightChecks.map((check, idx) => (
-                    <tr key={idx}>
-                      <td>
-                        <span className='text-gray-900 fw-bold text-hover-primary fs-6'>{check.model}</span>
-                      </td>
-                      <td>
-                        <span className='text-muted fw-semibold fs-7'>{check.serial}</span>
-                      </td>
-                      <td className='text-end fw-bold text-gray-800'>{check.std}</td>
-                      <td className='text-end text-gray-800'>{check.obs}</td>
-                      <td className={`text-end fw-bold ${check.dev.startsWith('+') ? 'text-danger' : 'text-primary'}`}>{check.dev}</td>
-                      <td className='text-end fw-semibold text-gray-900'>{check.accuracy}</td>
-                      <td className='text-end'>
-                        <span className={`badge badge-light-${check.badge} fw-bold px-3 py-1`}>{check.status}</span>
-                      </td>
+            <div className='card-body pt-3'>
+              {/* Chart */}
+              <div className='mb-6'>
+                <Chart options={lineChartOptions} series={lineChartSeries} type='area' height={230} />
+              </div>
+
+              {/* High-Precision Scale Inspections Table */}
+              <div className='table-responsive'>
+                <table className='table align-middle table-row-dashed gs-0 gy-3 fs-7'>
+                  <thead>
+                    <tr className='fw-bolder text-muted border-bottom-0 text-uppercase fs-8'>
+                      <th className='min-w-150px'>Scale Model</th>
+                      <th className='min-w-100px'>Serial No</th>
+                      <th className='min-w-100px'>Std Weight</th>
+                      <th className='min-w-100px'>Observed</th>
+                      <th className='min-w-80px'>Dev</th>
+                      <th className='min-w-100px'>Accuracy</th>
+                      <th className='text-end min-w-100px'>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className='text-gray-700 fw-semibold'>
+                    {recentInspections.map((row, idx) => (
+                      <tr key={idx}>
+                        <td className='fw-bold text-gray-900 d-flex align-items-center gap-2'>
+                          <KTIcon iconName='cpu' className='fs-4 text-primary' />
+                          {row.model}
+                        </td>
+                        <td className='text-muted fs-8'>{row.serial}</td>
+                        <td className='text-gray-800 fw-bold'>{row.std}</td>
+                        <td className='text-gray-800 fw-bold'>{row.obs}</td>
+                        <td className={`fw-extrabold text-${row.badge}`}>{row.dev}</td>
+                        <td className='fw-extrabold text-gray-900'>{row.accuracy}</td>
+                        <td className='text-end'>
+                          <span className={`badge badge-light-${row.badge} fw-bold fs-8 px-3 py-1.5`}>
+                            {row.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 4. Brand-wise Stock Distribution & Alerts */}
-      <div className='col-xl-4 mb-5 mb-xl-10'>
-        <div className='card card-flush h-xl-100 border-0 bg-body shadow-sm'>
-          <div className='card-header pt-7 px-8 border-0'>
-            <h3 className='card-title align-items-start flex-column'>
-              <span className='card-label fw-bold text-gray-900 fs-3'>Brand-wise Stock</span>
-              <span className='text-gray-500 mt-1 fw-semibold fs-7'>Value distribution across major partners</span>
-            </h3>
-          </div>
-
-          <div className='card-body pt-5 px-8 d-flex flex-column justify-content-between'>
-            {/* Donut Chart Container */}
-            <div className='d-flex flex-center position-relative mb-5' style={{ height: '170px' }}>
-              <div className='position-absolute d-flex flex-column align-items-center justify-content-center'>
-                <span className='fs-2hx fw-bold text-gray-900'>₹2.29Cr</span>
-                <span className='text-gray-500 fs-7 fw-semibold'>Total Stocked</span>
-              </div>
-              <Chart options={donutChartOptions} series={donutChartSeries} type='donut' width='100%' height={170} />
-            </div>
-
-            {/* Legend list */}
-            <div className='d-flex flex-column gap-3 mb-6'>
-              <div className='d-flex align-items-center justify-content-between'>
-                <div className='d-flex align-items-center gap-3'>
-                  <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#3730a3' }}></span>
-                  <span className='text-gray-700 fw-bold fs-7'>Archerchem Instruments</span>
-                </div>
-                <span className='text-gray-900 fw-bold fs-6'>₹85.4L</span>
-              </div>
-              <div className='d-flex align-items-center justify-content-between'>
-                <div className='d-flex align-items-center gap-3'>
-                  <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#0284c7' }}></span>
-                  <span className='text-gray-700 fw-bold fs-7'>Radwag Weighing Systems</span>
-                </div>
-                <span className='text-gray-900 fw-bold fs-6'>₹62.1L</span>
-              </div>
-              <div className='d-flex align-items-center justify-content-between'>
-                <div className='d-flex align-items-center gap-3'>
-                  <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#d97706' }}></span>
-                  <span className='text-gray-700 fw-bold fs-7'>Tapson Analytics</span>
-                </div>
-                <span className='text-gray-900 fw-bold fs-6'>₹48.8L</span>
-              </div>
-              <div className='d-flex align-items-center justify-content-between'>
-                <div className='d-flex align-items-center gap-3'>
-                  <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#7c3aed' }}></span>
-                  <span className='text-gray-700 fw-bold fs-7'>ADRA Instruments</span>
-                </div>
-                <span className='text-gray-900 fw-bold fs-6'>₹32.5L</span>
+        {/* Brand Inventory Allocation Donut */}
+        <div className='col-12 col-xl-4'>
+          <div className='card card-flush h-xl-100 border-0 shadow-sm bg-body'>
+            <div className='card-header pt-7 pb-2 border-0'>
+              <div className='card-title d-flex flex-column'>
+                <span className='card-label fw-extrabold text-gray-900 fs-3 mb-1'>
+                  Brand Stock Allocation
+                </span>
+                <span className='text-gray-500 fw-semibold fs-7'>
+                  Valuation split by brand manufacturers
+                </span>
               </div>
             </div>
 
-            {/* Critical Low Stock banner */}
-            <Link to='/store' className='d-flex align-items-center gap-4 bg-light-warning p-4 rounded text-decoration-none'>
-              <span className='fs-2'>⚠️</span>
-              <div className='d-flex flex-column flex-grow-1'>
-                <span className='text-warning-bold fw-bold fs-6'>Critical Low Stock Alert</span>
-                <span className='text-gray-600 fs-7'>12 items are currently below safety threshold levels.</span>
+            <div className='card-body pt-3 d-flex flex-column justify-content-between'>
+              <div className='d-flex flex-center position-relative mb-6 my-auto'>
+                <Chart options={donutChartOptions} series={donutChartSeries} type='donut' height={250} />
               </div>
-              <i className='bi bi-chevron-right fs-4 text-gray-400'></i>
-            </Link>
-          </div>
-        </div>
-      </div>
 
-      {/* 5. Quick Access Menu Grid */}
-      <div className='col-12 mb-5 mb-xl-10'>
-        <div className='card card-flush border-0 bg-body shadow-sm'>
-          <div className='card-header pt-7 px-8 border-0'>
-            <h3 className='card-title align-items-start flex-column'>
-              <span className='card-label fw-bold text-gray-900 fs-3'>Quick Access ERP Modules</span>
-              <span className='text-gray-500 mt-1 fw-semibold fs-7'>Instantly hop into core factory operations</span>
-            </h3>
-          </div>
-          <div className='card-body pt-3 px-8 pb-8'>
-            <div className='row row-cols-2 row-cols-sm-3 row-cols-md-5 g-4'>
-              <div className='col'>
-                <Link to='/brands' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>🏭</span>
-                  <span className='fw-bold fs-7'>Brands &amp; branches</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/oif' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>📝</span>
-                  <span className='fw-bold fs-7'>Order Intimation (OIF)</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/electronics' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>⚡</span>
-                  <span className='fw-bold fs-7'>Electronics BOM</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/qc' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>🧪</span>
-                  <span className='fw-bold fs-7'>QC Scale Reports</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/calibration' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>📜</span>
-                  <span className='fw-bold fs-7'>Calibration certs</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/amc' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>🛠️</span>
-                  <span className='fw-bold fs-7'>Service &amp; AMC</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/purchase' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>🛒</span>
-                  <span className='fw-bold fs-7'>Purchase &amp; Requisition</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/store' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>📦</span>
-                  <span className='fw-bold fs-7'>Store locations</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/store' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>↔️</span>
-                  <span className='fw-bold fs-7'>Inter-branch transfers</span>
-                </Link>
-              </div>
-              <div className='col'>
-                <Link to='/settings/profile' className='btn btn-outline btn-outline-dashed btn-outline-default d-flex flex-column align-items-center text-center p-5 rounded-4 h-100 justify-content-center gap-2 border-hover-primary text-gray-800 text-hover-primary'>
-                  <span className='fs-2x mb-1'>👤</span>
-                  <span className='fw-bold fs-7'>Profile Settings</span>
-                </Link>
+              {/* Brand Rows */}
+              <div className='d-flex flex-column gap-3'>
+                <div className='d-flex align-items-center justify-content-between p-3 bg-light rounded-3'>
+                  <div className='d-flex align-items-center gap-2.5'>
+                    <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#4f46e5' }}></span>
+                    <span className='fs-7 fw-bold text-gray-800'>Archerchem</span>
+                  </div>
+                  <span className='fs-7 fw-extrabold text-gray-900'>₹85.4L (37%)</span>
+                </div>
+
+                <div className='d-flex align-items-center justify-content-between p-3 bg-light rounded-3'>
+                  <div className='d-flex align-items-center gap-2.5'>
+                    <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#0284c7' }}></span>
+                    <span className='fs-7 fw-bold text-gray-800'>Radwag</span>
+                  </div>
+                  <span className='fs-7 fw-extrabold text-gray-900'>₹62.1L (27%)</span>
+                </div>
+
+                <div className='d-flex align-items-center justify-content-between p-3 bg-light rounded-3'>
+                  <div className='d-flex align-items-center gap-2.5'>
+                    <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#f59e0b' }}></span>
+                    <span className='fs-7 fw-bold text-gray-800'>Tapson</span>
+                  </div>
+                  <span className='fs-7 fw-extrabold text-gray-900'>₹48.8L (21%)</span>
+                </div>
+
+                <div className='d-flex align-items-center justify-content-between p-3 bg-light rounded-3'>
+                  <div className='d-flex align-items-center gap-2.5'>
+                    <span className='w-12px h-12px rounded-circle' style={{ backgroundColor: '#8b5cf6' }}></span>
+                    <span className='fs-7 fw-bold text-gray-800'>ADRA</span>
+                  </div>
+                  <span className='fs-7 fw-extrabold text-gray-900'>₹32.5L (15%)</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 6. Recent Operations Timeline */}
-      <div className='col-12 mb-5'>
-        <div className='card card-flush border-0 bg-body shadow-sm'>
-          <div className='card-header pt-7 px-8 border-0'>
-            <h3 className='card-title align-items-start flex-column'>
-              <span className='card-label fw-bold text-gray-900 fs-3'>Recent Operations Feed</span>
-              <span className='text-gray-500 mt-1 fw-semibold fs-7'>Recent events logs across departments</span>
-            </h3>
-          </div>
-          <div className='card-body pt-5 px-8 pb-8'>
-            <div className='timeline-label'>
-              <div className='timeline-item d-flex align-items-start mb-6'>
-                <div className='timeline-label fw-bold text-gray-800 fs-6 w-75px me-4'>10 mins</div>
-                <div className='timeline-badge d-flex align-items-center justify-content-center me-4'>
-                  <span className='w-12px h-12px bg-primary rounded-circle border border-white border-2'></span>
-                </div>
-                <div className='timeline-content text-gray-800 fs-6'>
-                  OIF-2026-045 created for Sunset Pharma Malad dispatch by Ramesh Patil.
-                </div>
-              </div>
-
-              <div className='timeline-item d-flex align-items-start mb-6'>
-                <div className='timeline-label fw-bold text-gray-800 fs-6 w-75px me-4'>25 mins</div>
-                <div className='timeline-badge d-flex align-items-center justify-content-center me-4'>
-                  <span className='w-12px h-12px bg-success rounded-circle border border-white border-2'></span>
-                </div>
-                <div className='timeline-content text-gray-800 fs-6'>
-                  PR-2026-001 (Chip Capacitors 100nf) approved by Store Head Munna Khan.
-                </div>
-              </div>
-
-              <div className='timeline-item d-flex align-items-start mb-6'>
-                <div className='timeline-label fw-bold text-gray-800 fs-6 w-75px me-4'>1 hour</div>
-                <div className='timeline-badge d-flex align-items-center justify-content-center me-4'>
-                  <span className='w-12px h-12px bg-warning rounded-circle border border-white border-2'></span>
-                </div>
-                <div className='timeline-content text-gray-800 fs-6 text-muted'>
-                  IC Register issued to R&D unit at Vasai Factory — quantity: 2 Pcs.
-                </div>
-              </div>
-
-              <div className='timeline-item d-flex align-items-start mb-6'>
-                <div className='timeline-label fw-bold text-gray-800 fs-6 w-75px me-4'>2 hours</div>
-                <div className='timeline-badge d-flex align-items-center justify-content-center me-4'>
-                  <span className='w-12px h-12px bg-info rounded-circle border border-white border-2'></span>
-                </div>
-                <div className='timeline-content text-gray-800 fs-6'>
-                  Stock received: Radwag PCB board modules (quantity: 50 Pcs) added to Vasai Store.
-                </div>
-              </div>
-
-              <div className='timeline-item d-flex align-items-start'>
-                <div className='timeline-label fw-bold text-gray-800 fs-6 w-75px me-4'>3 hours</div>
-                <div className='timeline-badge d-flex align-items-center justify-content-center me-4'>
-                  <span className='w-12px h-12px bg-dark rounded-circle border border-white border-2'></span>
-                </div>
-                <div className='timeline-content text-gray-800 fs-6'>
-                  New OIF registered for ADRA customer in Pune — Serial check scheduled.
-                </div>
-              </div>
+      {/* ══ 5. SYSTEM ACTIVITY LOGS TIMELINE ══ */}
+      <div className='card card-flush shadow-sm border-0'>
+        <div className='card-header pt-6 pb-2 border-0'>
+          <div className='card-title d-flex align-items-center gap-3'>
+            <span className='badge badge-light-success p-3 rounded-circle'>
+              <KTIcon iconName='time' className='fs-2 text-success' />
+            </span>
+            <div className='d-flex flex-column'>
+              <h3 className='fw-bolder text-gray-900 fs-4 mb-0'>Real-time System Activity Stream</h3>
+              <span className='text-muted fs-7 fw-semibold'>Live audit log events across tenant branches</span>
             </div>
+          </div>
+        </div>
+
+        <div className='card-body pt-3 pb-7'>
+          <div className='row g-6'>
+            {activityLogs.map((log, index) => (
+              <div key={index} className='col-12 col-md-6'>
+                <div className='d-flex align-items-start gap-4 p-4 rounded-3 bg-light border border-dashed border-gray-300'>
+                  <span className={`badge badge-light-${log.color} p-3 rounded-3 mt-1`}>
+                    <KTIcon iconName={log.icon} className='fs-2' />
+                  </span>
+                  <div className='d-flex flex-column flex-grow-1'>
+                    <div className='d-flex align-items-center justify-content-between mb-1'>
+                      <span className={`badge badge-light-${log.color} fw-bold fs-8`}>
+                        {log.type}
+                      </span>
+                      <span className='text-muted fs-8 fw-semibold'>{log.time}</span>
+                    </div>
+                    <span className='text-gray-800 fw-bold fs-7 line-clamp-2'>
+                      {log.title}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
