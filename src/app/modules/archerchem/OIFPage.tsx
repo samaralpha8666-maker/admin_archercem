@@ -473,13 +473,9 @@ const OIFPage: FC = () => {
                             <td className='text-end'>
                               <div className='d-flex justify-content-end gap-2'>
                                 <button
-                                  onClick={() => {
-                                    setActiveOifId(o.id)
-                                    setPrintTheme(o.brand as any || 'Archerchem')
-                                    setViewState('detail')
-                                  }}
+                                  onClick={() => executePrintOIF(o, o.brand)}
                                   className='btn btn-icon btn-light-info btn-sm'
-                                  title='View / Print Sheet'
+                                  title='Direct Print PDF'
                                 >
                                   <i className='bi bi-printer fs-5'></i>
                                 </button>

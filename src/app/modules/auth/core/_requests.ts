@@ -218,6 +218,23 @@ export function deleteCalibrationCertificate(id: string) {
   return axios.delete<{ success: boolean; message: string; error?: string }>(`${API_URL}/tenant/calibration/${encodeURIComponent(id)}`)
 }
 
+// --- QC Reports API Requests ---
+export function getQcReports() {
+  return axios.get<{ success: boolean; reports: any[]; error?: string }>(`${API_URL}/tenant/qc`)
+}
+
+export function createQcReport(reportData: any) {
+  return axios.post<{ success: boolean; report: any; error?: string }>(`${API_URL}/tenant/qc`, reportData)
+}
+
+export function updateQcReport(id: string, reportData: any) {
+  return axios.put<{ success: boolean; report: any; error?: string }>(`${API_URL}/tenant/qc/${encodeURIComponent(id)}`, reportData)
+}
+
+export function deleteQcReport(id: string) {
+  return axios.delete<{ success: boolean; message: string; error?: string }>(`${API_URL}/tenant/qc/${encodeURIComponent(id)}`)
+}
+
 // --- Reports Summary API Requests ---
 export function getReportsSummary(location?: string) {
   return axios.get<{ success: boolean; summary: any }>(`${API_URL}/tenant/reports/summary`, {
