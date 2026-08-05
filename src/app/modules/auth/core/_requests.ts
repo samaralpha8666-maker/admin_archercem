@@ -39,6 +39,12 @@ export function getUserByToken(token: string) {
   })
 }
 
+export function updateProfile(profileData: any, subdomain?: string) {
+  return axios.put<{ success: boolean; tenant: any }>(`${API_URL}/tenant/profile`, profileData, {
+    headers: subdomain ? { 'x-tenant-subdomain': subdomain } : {}
+  })
+}
+
 // --- Multi-Tenant API Requests ---
 
 export function getTenants() {
@@ -57,138 +63,92 @@ export function getTenantAdmins(tenantId: number | string) {
   return axios.get<{ success: boolean; admins: any[] }>(`${API_URL}/master/tenants/${tenantId}/admins`)
 }
 
-
-
+// --- Document Management API Requests ---
 export function getDocuments() {
   return axios.get<{ success: boolean; documents: DocumentModel[] }>(`${API_URL}/tenant/documents`)
 }
 
-export function createDocument(documentData: { title: string; content: string }) {
-  return axios.post<{ success: boolean; document: DocumentModel }>(`${API_URL}/tenant/documents`, documentData)
-}
-
-// --- Leads & Demo Requests ---
-export const GET_LEADS_URL = `${API_URL}/admin/leads`
-export const UPDATE_LEAD_STATUS_URL = (id: string | number) => `${API_URL}/admin/leads/${id}/status`
-
-export function getLeads(page: number, limit: number, type?: string, status?: string) {
-  return axios.get<LeadsListResponse>(GET_LEADS_URL, {
-    params: {
-      limit,
-      offset: (page - 1) * limit,
-      type: type || undefined,
-      status: status || undefined
+export function createDocument(formData: any) {
+  return axios.post<{ success: boolean; document: DocumentModel }>(`${API_URL}/tenant/documents`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
     }
   })
 }
 
-export function updateLeadStatus(id: string | number, status: 'PENDING' | 'CONTACTED' | 'RESOLVED') {
-  return axios.patch<any>(UPDATE_LEAD_STATUS_URL(id), { status })
+// --- User Management API Requests ---
+export function getUsers() {
+  return axios.get<{ success: boolean; users: UserModel[] }>(`${API_URL}/tenant/users`)
 }
 
-// --- Blog Management ---
-export const GET_BLOGS_URL = `${API_URL}/admin/blogs`
-export const BLOG_DETAIL_URL = (id: string | number) => `${API_URL}/admin/blogs/${id}`
-export const GENERATE_BLOG_AI_URL = `${API_URL}/admin/blogs/generate`
-export const UPDATE_ADMIN_KEYS_URL = `${API_URL}/admin/api-keys`
-export const UPLOAD_BLOG_IMAGE_URL = `${API_URL}/admin/blogs/upload`
-
-export function getBlogs(page: number, limit: number, status?: string) {
-  return axios.get<BlogsListResponse>(GET_BLOGS_URL, {
-    params: {
-      limit,
-      offset: (page - 1) * limit,
-      status: status || undefined
-    }
-  })
+export function createUser(userData: Partial<UserModel>) {
+  return axios.post<{ success: boolean; user: UserModel }>(`${API_URL}/tenant/users`, userData)
 }
 
-export function createBlog(blogData: Partial<BlogModel>) {
-  return axios.post<{ success: boolean; data: BlogModel }>(GET_BLOGS_URL, blogData)
+export function updateUser(id: string | number, userData: Partial<UserModel>) {
+  return axios.put<{ success: boolean; user: UserModel }>(`${API_URL}/tenant/users/${id}`, userData)
 }
 
-export function updateBlog(id: string | number, blogData: Partial<BlogModel>) {
-  return axios.put<{ success: boolean; data: BlogModel }>(BLOG_DETAIL_URL(id), blogData)
+export function deleteUser(id: string | number) {
+  return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/users/${id}`)
 }
 
-export function deleteBlog(id: string | number) {
-  return axios.delete(BLOG_DETAIL_URL(id))
-}
-
-export function uploadBlogImage(imageFile: File) {
-  const formData = new FormData()
-  formData.append('image', imageFile)
-  return axios.post<{ success: boolean; data: { imageUrl: string } }>(UPLOAD_BLOG_IMAGE_URL, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-}
-
-export function generateBlogAI(payload: {
-  prompt: string
-  keywords?: string
-  provider: 'GEMINI' | 'OPENAI' | 'GROK'
-  custom_key?: string
-}) {
-  return axios.post<AIBlogGenerationResponse>(GENERATE_BLOG_AI_URL, payload)
-}
-
-export function updateAdminKeys(keysData: { gemini_api_key?: string; openai_api_key?: string; grok_api_key?: string }) {
-  return axios.put<{ success: boolean; data: any }>(UPDATE_ADMIN_KEYS_URL, keysData)
-}
-
-export function updateProfile(profileData: { name?: string; email?: string; password?: string }, role: string = 'admin') {
-  if (role === 'super_admin') {
-    return axios.put<{ success: boolean; admin: UserModel }>(`${API_URL}/master/profile`, profileData)
-  } else {
-    return axios.put<{ success: boolean; user: UserModel }>(`${API_URL}/tenant/profile`, profileData)
-  }
-}
-
-// --- OIF Order API Requests ---
-export function getOifs(branch?: string) {
+// --- OIF Orders API Requests ---
+export function getOifOrders(params?: any) {
   return axios.get<{ success: boolean; orders: any[] }>(`${API_URL}/tenant/oif`, {
-    params: { branch }
+    params: typeof params === 'string' ? { search: params } : params
   })
 }
 
-export function createOif(oifData: any) {
-  return axios.post<{ success: boolean; order: any }>(`${API_URL}/tenant/oif`, oifData)
+export function createOifOrder(orderData: any) {
+  return axios.post<{ success: boolean; order: any }>(`${API_URL}/tenant/oif`, orderData)
 }
 
-export function updateOif(id: string | number, oifData: any) {
-  return axios.put<{ success: boolean; order: any }>(`${API_URL}/tenant/oif/${id}`, oifData)
+export function updateOifOrder(id: string | number, orderData: any) {
+  return axios.put<{ success: boolean; order: any }>(`${API_URL}/tenant/oif/${id}`, orderData)
 }
+
+// Legacy aliases for OIF
+export const getOifs = getOifOrders
+export const createOif = createOifOrder
+export const updateOif = updateOifOrder
 
 // --- Electronics BOM API Requests ---
-export function getElectronics(branch?: string) {
-  return axios.get<{ success: boolean; boards: any[] }>(`${API_URL}/tenant/electronics`, {
-    params: { branch }
-  })
+export function getElectronicsBoards(params?: any) {
+  return axios.get<{ success: boolean; boards: any[] }>(`${API_URL}/tenant/electronics`, { params })
 }
 
-export function createElectronicBoard(boardData: any) {
+export function createElectronicsBoard(boardData: any) {
   return axios.post<{ success: boolean; board: any }>(`${API_URL}/tenant/electronics`, boardData)
 }
 
-export function updateElectronicBoard(id: string | number, boardData: any) {
+export function updateElectronicsBoard(id: string | number, boardData: any) {
   return axios.put<{ success: boolean; board: any }>(`${API_URL}/tenant/electronics/${id}`, boardData)
 }
 
-export function deleteElectronicBoard(id: string | number) {
+export function deleteElectronicsBoard(id: string | number) {
   return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/electronics/${id}`)
 }
 
-export function manufactureElectronicBoard(id: string | number, qty: number, ref: string) {
-  return axios.post<{ success: boolean; board: any }>(`${API_URL}/tenant/electronics/${id}/manufacture`, { qty, ref })
+export function manufactureElectronicsBoard(id: string | number, qtyOrPayload: any, actionBy?: string) {
+  const payload = typeof qtyOrPayload === 'object' ? qtyOrPayload : { qty: qtyOrPayload, actionBy }
+  return axios.post<{ success: boolean; board: any; log: any }>(`${API_URL}/tenant/electronics/${id}/manufacture`, payload)
 }
 
-export function getElectronicsLogs(boardId?: string | number) {
+export function getElectronicsLogs(boardId?: any) {
   return axios.get<{ success: boolean; logs: any[] }>(`${API_URL}/tenant/electronics/logs`, {
-    params: { boardId }
+    params: boardId ? { boardId } : undefined
   })
 }
 
-// --- Dynamic Branches API Requests ---
+// Legacy aliases for Electronics
+export const getElectronics = getElectronicsBoards
+export const createElectronicBoard = createElectronicsBoard
+export const updateElectronicBoard = updateElectronicsBoard
+export const deleteElectronicBoard = deleteElectronicsBoard
+export const manufactureElectronicBoard = manufactureElectronicsBoard
+
+// --- Branch Management API Requests ---
 export function getBranches() {
   return axios.get<{ success: boolean; branches: any[] }>(`${API_URL}/tenant/branches`)
 }
@@ -205,7 +165,7 @@ export function deleteBranch(id: string | number) {
   return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/branches/${id}`)
 }
 
-// --- Dynamic Brands API Requests ---
+// --- Brand Management API Requests ---
 export function getBrands() {
   return axios.get<{ success: boolean; brands: any[] }>(`${API_URL}/tenant/brands`)
 }
@@ -220,23 +180,6 @@ export function updateBrand(id: string | number, brandData: any) {
 
 export function deleteBrand(id: string | number) {
   return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/brands/${id}`)
-}
-
-// --- User Management API Requests ---
-export function getUsers() {
-  return axios.get<{ success: boolean; users: UserModel[] }>(`${API_URL}/tenant/users`)
-}
-
-export function createUser(userData: Partial<UserModel>) {
-  return axios.post<{ success: boolean; message?: string; user: UserModel }>(`${API_URL}/tenant/users`, userData)
-}
-
-export function updateUser(id: number | string, userData: Partial<UserModel>) {
-  return axios.put<{ success: boolean; message?: string; user: UserModel }>(`${API_URL}/tenant/users/${id}`, userData)
-}
-
-export function deleteUser(id: number | string) {
-  return axios.delete<{ success: boolean; message?: string }>(`${API_URL}/tenant/users/${id}`)
 }
 
 // --- Purchase Requisitions API Requests ---
@@ -256,6 +199,23 @@ export function updatePurchaseRequisition(id: string | number, prData: any) {
 
 export function deletePurchaseRequisition(id: string | number) {
   return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/purchase/${id}`)
+}
+
+// --- Calibration Certificates API Requests ---
+export function getCalibrationCertificates() {
+  return axios.get<{ success: boolean; certificates: any[]; error?: string }>(`${API_URL}/tenant/calibration`)
+}
+
+export function createCalibrationCertificate(certData: any) {
+  return axios.post<{ success: boolean; certificate: any; error?: string }>(`${API_URL}/tenant/calibration`, certData)
+}
+
+export function updateCalibrationCertificate(id: string, certData: any) {
+  return axios.put<{ success: boolean; certificate: any; error?: string }>(`${API_URL}/tenant/calibration/${encodeURIComponent(id)}`, certData)
+}
+
+export function deleteCalibrationCertificate(id: string) {
+  return axios.delete<{ success: boolean; message: string; error?: string }>(`${API_URL}/tenant/calibration/${encodeURIComponent(id)}`)
 }
 
 // --- Reports Summary API Requests ---
