@@ -52,6 +52,21 @@ function oimlCalcCore(maxG: number, eG: number) {
   return { cls, minG, uspMinG, uspMaxG, mpeRanges }
 }
 
+export function calcOimlClassAndMin(maxValStr: string, maxUnit: string, eValStr: string, eUnit: string) {
+  const maxVal = parseFloat(maxValStr)
+  const eVal = parseFloat(eValStr)
+  if (isNaN(maxVal) || isNaN(eVal) || maxVal <= 0 || eVal <= 0) {
+    return { cls: '', minWeight: '' }
+  }
+  const maxG = oimlToGrams(maxVal, maxUnit)
+  const eG = oimlToGrams(eVal, eUnit)
+  const calc = oimlCalcCore(maxG, eG)
+  return {
+    cls: `Class ${calc.cls}`,
+    minWeight: formatWeight(calc.minG, eUnit)
+  }
+}
+
 const OIMLPage: FC = () => {
   const [maxCap, setMaxCap] = useState<string>('220')
   const [maxUnit, setMaxUnit] = useState<string>('g')
@@ -148,6 +163,8 @@ const OIMLPage: FC = () => {
     `
       )
       .join('')
+
+    const logoUrl = window.location.origin + '/media/logos/archerchem.png'
 
     const html = `
       <!DOCTYPE html>
@@ -313,9 +330,12 @@ const OIMLPage: FC = () => {
         <body>
           <div class="cert-container">
             <div class="header">
-              <div>
-                <div class="brand-title">⚖️ ARCHERCHEM INSTRUMENTS</div>
-                <div class="brand-sub">Vasai Factory · Metrology & Calibration Laboratory (ISO 17025 Accredited)</div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <img src="${logoUrl}" alt="Archerchem Logo" style="max-height:48px;width:auto;object-fit:contain" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%2240%22><text y=%2225%22 font-size=%2216%22 font-weight=%22bold%22 fill=%22%231a2b6b%22>⚖️ ARCHERCHEM</text></svg>';">
+                <div>
+                  <div class="brand-title">ARCHERCHEM INSTRUMENTS</div>
+                  <div class="brand-sub">Vasai Factory · Metrology & Calibration Laboratory (ISO 17025 Accredited)</div>
+                </div>
               </div>
               <div class="meta-box">
                 <div>Certificate Ref: <span class="meta-no">${certNo}</span></div>
@@ -397,9 +417,16 @@ const OIMLPage: FC = () => {
             </div>
           </div>
           <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
+            function doPrint() {
+              setTimeout(function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 500);
+              }, 350);
+            }
+            if (document.readyState === 'complete') {
+              doPrint();
+            } else {
+              window.onload = doPrint;
             }
           </script>
         </body>

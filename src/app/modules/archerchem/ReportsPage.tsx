@@ -2,7 +2,8 @@ import { FC, useState, useEffect } from 'react'
 import { PageTitle } from '../../../_metronic/layout/core'
 import { Content } from '../../../_metronic/layout/components/content'
 import { KTIcon } from '../../../_metronic/helpers'
-import { getReportsSummary } from '../auth/core/_requests'
+import { getReportsSummary, getStampingApplications } from '../auth/core/_requests'
+import { generateAndPrintStampingPdf } from './StampingPage'
 import toast from 'react-hot-toast'
 
 interface ReportCardItem {
@@ -20,13 +21,20 @@ const ReportsPage: FC = () => {
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [summaryData, setSummaryData] = useState<any>(null)
+  const [stampingApplications, setStampingApplications] = useState<any[]>([])
 
   const fetchReportsData = async (loc: string) => {
     setLoading(true)
     try {
-      const res = await getReportsSummary(loc)
-      if (res.data?.success) {
-        setSummaryData(res.data.summary)
+      const [sumRes, stampRes] = await Promise.all([
+        getReportsSummary(loc),
+        getStampingApplications()
+      ])
+      if (sumRes.data?.success) {
+        setSummaryData(sumRes.data.summary)
+      }
+      if (stampRes.data?.success && Array.isArray(stampRes.data.applications)) {
+        setStampingApplications(stampRes.data.applications)
       }
     } catch (err) {
       console.error('Failed to fetch reports summary:', err)
@@ -40,6 +48,7 @@ const ReportsPage: FC = () => {
   }, [selectedLocation])
 
   const REPORT_ITEMS: ReportCardItem[] = [
+    { id: 'stamping', title: 'Stamping Applications', subtitle: 'Legal Metrology verification forms & PDF re-print archive', icon: 'shield-check', color: 'success', countText: `${stampingApplications.length} Applications` },
     { id: 'stock', title: 'Stock Report', subtitle: 'Location-wise inventory valuation & SKU breakdown', icon: 'archive', color: 'primary', countText: summaryData ? `${summaryData.electronicsCount * 120 + 450} SKUs` : '2,450 SKUs' },
     { id: 'oif', title: 'OIF Report', subtitle: 'Order intimations, dispatch logs & client summary', icon: 'briefcase', color: 'info', countText: summaryData ? `${summaryData.oifCount} Orders` : '148 Orders' },
     { id: 'purchase', title: 'Purchase Report', subtitle: 'PR status, PO approvals & supplier expenditures', icon: 'basket', color: 'warning', countText: summaryData ? `${summaryData.prCount} PRs` : '32 PRs' },
@@ -55,7 +64,7 @@ const ReportsPage: FC = () => {
   const handleOpenReport = (item: ReportCardItem) => {
     setActiveReport(item)
     setShowModal(true)
-    toast.success(`Generated ${item.title} for ${selectedLocation}`)
+    toast.success(`Loaded ${item.title} for ${selectedLocation}`)
   }
 
   const handleExport = (type: string) => {
@@ -85,7 +94,7 @@ const ReportsPage: FC = () => {
                   </div>
                   <h1 className='fs-2hx fw-extrabold text-white mb-2'>Reports Hub</h1>
                   <p className='text-white text-opacity-80 fw-semibold fs-6 mb-0' style={{ maxWidth: '600px' }}>
-                    Generate, inspect and export detailed reports across all branch inventory, order intimations, purchase requisitions, and scale calibration logs.
+                    Generate, inspect and export detailed reports across all branch inventory, order intimations, stamping applications, purchase requisitions, and scale calibration logs.
                   </p>
                 </div>
 
@@ -144,7 +153,7 @@ const ReportsPage: FC = () => {
         {/* Modal: View Report Details */}
         {showModal && activeReport && (
           <div className='modal fade show d-block' style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} role='dialog'>
-            <div className='modal-dialog modal-dialog-centered modal-lg'>
+            <div className='modal-dialog modal-dialog-centered modal-xl'>
               <div className='modal-content border-0 shadow-lg rounded bg-body'>
                 <div className='modal-header border-0 pt-5 px-6'>
                   <div className='d-flex align-items-center gap-3'>
@@ -153,7 +162,7 @@ const ReportsPage: FC = () => {
                     </span>
                     <div>
                       <h5 className='modal-title fw-bold fs-3 text-gray-900'>{activeReport.title}</h5>
-                      <span className='text-muted fs-8 fw-semibold'>Location: {selectedLocation}</span>
+                      <span className='text-muted fs-8 fw-semibold'>Location Node: {selectedLocation}</span>
                     </div>
                   </div>
                   <button type='button' className='btn-close' onClick={() => setShowModal(false)}></button>
@@ -164,49 +173,99 @@ const ReportsPage: FC = () => {
                     <div className='d-flex align-items-center gap-3'>
                       <KTIcon iconName='information-5' className='fs-2x text-primary' />
                       <div>
-                        <span className='fw-bold text-gray-900 fs-6 d-block'>Report Query Execution Complete</span>
-                        <span className='fs-8 text-gray-600 fw-semibold'>Summary data filtered for location: {selectedLocation}</span>
+                        <span className='fw-bold text-gray-900 fs-6 d-block'>Report Audit Stream Loaded</span>
+                        <span className='fs-8 text-gray-600 fw-semibold'>Verified records for location: {selectedLocation}</span>
                       </div>
                     </div>
                     <span className='badge badge-primary fs-7 fw-bold px-3 py-1.5'>{activeReport.countText}</span>
                   </div>
 
-                  <div className='table-responsive border rounded-3'>
-                    <table className='table table-row-dashed table-row-gray-300 align-middle gs-0 gy-3 mb-0 fs-7'>
-                      <thead>
-                        <tr className='fw-bolder text-muted bg-light text-uppercase fs-8'>
-                          <th className='ps-4'>Ref ID</th>
-                          <th>Category / Module</th>
-                          <th>Location Node</th>
-                          <th>Timestamp</th>
-                          <th className='text-end pe-4'>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className='text-gray-700 fw-semibold'>
-                        <tr>
-                          <td className='ps-4 fw-bold text-gray-900'>REP-2026-001</td>
-                          <td>{activeReport.title}</td>
-                          <td>{selectedLocation}</td>
-                          <td>Today, 11:30 AM</td>
-                          <td className='text-end pe-4'><span className='badge badge-light-success fw-bold fs-8'>Active</span></td>
-                        </tr>
-                        <tr>
-                          <td className='ps-4 fw-bold text-gray-900'>REP-2026-002</td>
-                          <td>{activeReport.title}</td>
-                          <td>{selectedLocation}</td>
-                          <td>Yesterday, 04:15 PM</td>
-                          <td className='text-end pe-4'><span className='badge badge-light-success fw-bold fs-8'>Verified</span></td>
-                        </tr>
-                        <tr>
-                          <td className='ps-4 fw-bold text-gray-900'>REP-2026-003</td>
-                          <td>{activeReport.title}</td>
-                          <td>{selectedLocation}</td>
-                          <td>03 Aug 2026</td>
-                          <td className='text-end pe-4'><span className='badge badge-light-info fw-bold fs-8'>Archived</span></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                  {activeReport.id === 'stamping' ? (
+                    <div className='table-responsive border rounded-3'>
+                      <table className='table table-row-dashed table-row-gray-300 align-middle gs-0 gy-3 mb-0 fs-7'>
+                        <thead>
+                          <tr className='fw-bolder text-muted bg-light text-uppercase fs-8'>
+                            <th className='ps-4'>App No</th>
+                            <th>Date</th>
+                            <th>To / Inspector Division</th>
+                            <th>Cheque Ref</th>
+                            <th>Balances</th>
+                            <th>Grand Total (₹)</th>
+                            <th className='text-end pe-4'>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className='text-gray-800 fw-semibold'>
+                          {stampingApplications.length > 0 ? (
+                            stampingApplications.map((app, idx) => (
+                              <tr key={app.id || idx}>
+                                <td className='ps-4 fw-extrabold text-gray-900'>#{app.appNo || app.id}</td>
+                                <td>{app.date}</td>
+                                <td className='text-truncate max-w-200px'>{app.to || 'Vasai Division'}</td>
+                                <td>{app.chequeRef || 'N/A'}</td>
+                                <td>
+                                  <span className='badge badge-light-primary fw-bold fs-8'>
+                                    {Array.isArray(app.rows) ? app.rows.length : 1} Items
+                                  </span>
+                                </td>
+                                <td className='fw-extrabold text-primary'>₹ {(app.grandTotal || 0).toLocaleString('en-IN')}</td>
+                                <td className='text-end pe-4'>
+                                  <button
+                                    onClick={() => generateAndPrintStampingPdf(app, app.rows || [], app.grandTotal || 0)}
+                                    className='btn btn-sm btn-light-primary fw-bold fs-8 d-flex align-items-center gap-1 ms-auto'
+                                  >
+                                    <KTIcon iconName='printer' className='fs-5' /> Re-Print PDF
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={7} className='text-center py-6 text-muted fs-8'>
+                                No Stamping Applications saved yet.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className='table-responsive border rounded-3'>
+                      <table className='table table-row-dashed table-row-gray-300 align-middle gs-0 gy-3 mb-0 fs-7'>
+                        <thead>
+                          <tr className='fw-bolder text-muted bg-light text-uppercase fs-8'>
+                            <th className='ps-4'>Ref ID</th>
+                            <th>Category / Module</th>
+                            <th>Location Node</th>
+                            <th>Timestamp</th>
+                            <th className='text-end pe-4'>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className='text-gray-700 fw-semibold'>
+                          <tr>
+                            <td className='ps-4 fw-bold text-gray-900'>REP-2026-001</td>
+                            <td>{activeReport.title}</td>
+                            <td>{selectedLocation}</td>
+                            <td>Today, 11:30 AM</td>
+                            <td className='text-end pe-4'><span className='badge badge-light-success fw-bold fs-8'>Active</span></td>
+                          </tr>
+                          <tr>
+                            <td className='ps-4 fw-bold text-gray-900'>REP-2026-002</td>
+                            <td>{activeReport.title}</td>
+                            <td>{selectedLocation}</td>
+                            <td>Yesterday, 04:15 PM</td>
+                            <td className='text-end pe-4'><span className='badge badge-light-success fw-bold fs-8'>Verified</span></td>
+                          </tr>
+                          <tr>
+                            <td className='ps-4 fw-bold text-gray-900'>REP-2026-003</td>
+                            <td>{activeReport.title}</td>
+                            <td>{selectedLocation}</td>
+                            <td>03 Aug 2026</td>
+                            <td className='text-end pe-4'><span className='badge badge-light-info fw-bold fs-8'>Archived</span></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
 
                 <div className='modal-footer border-0 pb-5 px-6 gap-3'>

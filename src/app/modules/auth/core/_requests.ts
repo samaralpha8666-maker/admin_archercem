@@ -276,15 +276,15 @@ export function createOimlRecord(recordData: any) {
 
 // --- Stamping Applications API Requests ---
 export function getStampingApplications() {
-  return axios.get<{ success: boolean; applications: any[] }>(`${API_URL}/tenant/stamping`)
+  return axios.get<{ success: boolean; applications: any[]; error?: string }>(`${API_URL}/tenant/stamping`)
 }
 
 export function createStampingApplication(appData: any) {
-  return axios.post<{ success: boolean; application: any }>(`${API_URL}/tenant/stamping`, appData)
+  return axios.post<{ success: boolean; application: any; error?: string }>(`${API_URL}/tenant/stamping`, appData)
 }
 
 export function deleteStampingApplication(id: string | number) {
-  return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/stamping/${id}`)
+  return axios.delete<{ success: boolean; message: string; error?: string }>(`${API_URL}/tenant/stamping/${id}`)
 }
 
 // --- Notifications API Requests ---
