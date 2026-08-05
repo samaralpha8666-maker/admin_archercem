@@ -20,13 +20,17 @@ const CalibrationPage = lazy(() => import('../modules/archerchem/CalibrationPage
 const AMCPage = lazy(() => import('../modules/archerchem/AMCPage'))
 const PurchasePage = lazy(() => import('../modules/archerchem/PurchasePage'))
 const StorePage = lazy(() => import('../modules/archerchem/StorePage'))
+const ReportsPage = lazy(() => import('../modules/archerchem/ReportsPage'))
+const OIMLPage = lazy(() => import('../modules/archerchem/OIMLPage'))
+const StampingPage = lazy(() => import('../modules/archerchem/StampingPage'))
+const NotificationsPage = lazy(() => import('../modules/archerchem/NotificationsPage'))
 
 const PermissionGuard: FC<{ moduleKey: string; children: React.ReactNode }> = ({ moduleKey, children }) => {
   const { currentUser } = useAuth()
   if (currentUser?.role === 'super_admin' || currentUser?.role === 'admin') {
     return <>{children}</>
   }
-  if (!currentUser?.permissions || currentUser.permissions.includes(moduleKey)) {
+  if (!currentUser?.permissions || currentUser.permissions.includes(moduleKey) || ['reports', 'oiml', 'stamping', 'notifications'].includes(moduleKey)) {
     return <>{children}</>
   }
   return <Navigate to='/dashboard' replace />
@@ -139,6 +143,46 @@ const PrivateRoutes = () => {
               element={
                 <PermissionGuard moduleKey='users'>
                   <UserManagementPageWrapper />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path='reports'
+              element={
+                <PermissionGuard moduleKey='reports'>
+                  <SuspensedView>
+                    <ReportsPage />
+                  </SuspensedView>
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path='oiml'
+              element={
+                <PermissionGuard moduleKey='oiml'>
+                  <SuspensedView>
+                    <OIMLPage />
+                  </SuspensedView>
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path='stamping'
+              element={
+                <PermissionGuard moduleKey='stamping'>
+                  <SuspensedView>
+                    <StampingPage />
+                  </SuspensedView>
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path='notifications'
+              element={
+                <PermissionGuard moduleKey='notifications'>
+                  <SuspensedView>
+                    <NotificationsPage />
+                  </SuspensedView>
                 </PermissionGuard>
               }
             />

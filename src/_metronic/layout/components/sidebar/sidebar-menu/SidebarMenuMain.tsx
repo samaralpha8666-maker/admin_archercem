@@ -10,6 +10,7 @@ const SidebarMenuMain = () => {
   const hasPermission = (moduleKey: string) => {
     if (isSuperAdmin || currentUser?.role === 'admin') return true
     if (!currentUser?.permissions) return true
+    if (['reports', 'oiml', 'stamping', 'notifications'].includes(moduleKey)) return true
     return currentUser.permissions.includes(moduleKey)
   }
 
@@ -114,6 +115,48 @@ const SidebarMenuMain = () => {
               icon='profile-user'
               title='User Management'
               fontIcon='bi-people'
+            />
+          )}
+
+          <div className='menu-item'>
+            <div className='menu-content pt-8 pb-2'>
+              <span className='menu-section text-muted text-uppercase fs-8 ls-1'>OTHERS</span>
+            </div>
+          </div>
+
+          {hasPermission('reports') && (
+            <SidebarMenuItem
+              to='/reports'
+              icon='element-7'
+              title='Reports'
+              fontIcon='bi-bar-chart-line'
+            />
+          )}
+
+          {hasPermission('oiml') && (
+            <SidebarMenuItem
+              to='/oiml'
+              icon='calculator'
+              title='OIML Calculator'
+              fontIcon='bi-calculator'
+            />
+          )}
+
+          {hasPermission('stamping') && (
+            <SidebarMenuItem
+              to='/stamping'
+              icon='shield-tick'
+              title='Stamping Application'
+              fontIcon='bi-file-earmark-check'
+            />
+          )}
+
+          {hasPermission('notifications') && (
+            <SidebarMenuItem
+              to='/notifications'
+              icon='notification-status'
+              title='Notifications'
+              fontIcon='bi-bell'
             />
           )}
         </>

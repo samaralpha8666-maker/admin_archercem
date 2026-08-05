@@ -257,3 +257,41 @@ export function updatePurchaseRequisition(id: string | number, prData: any) {
 export function deletePurchaseRequisition(id: string | number) {
   return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/purchase/${id}`)
 }
+
+// --- Reports Summary API Requests ---
+export function getReportsSummary(location?: string) {
+  return axios.get<{ success: boolean; summary: any }>(`${API_URL}/tenant/reports/summary`, {
+    params: { location }
+  })
+}
+
+// --- OIML Calculation API Requests ---
+export function getOimlRecords() {
+  return axios.get<{ success: boolean; records: any[] }>(`${API_URL}/tenant/oiml`)
+}
+
+export function createOimlRecord(recordData: any) {
+  return axios.post<{ success: boolean; record: any }>(`${API_URL}/tenant/oiml`, recordData)
+}
+
+// --- Stamping Applications API Requests ---
+export function getStampingApplications() {
+  return axios.get<{ success: boolean; applications: any[] }>(`${API_URL}/tenant/stamping`)
+}
+
+export function createStampingApplication(appData: any) {
+  return axios.post<{ success: boolean; application: any }>(`${API_URL}/tenant/stamping`, appData)
+}
+
+export function deleteStampingApplication(id: string | number) {
+  return axios.delete<{ success: boolean; message: string }>(`${API_URL}/tenant/stamping/${id}`)
+}
+
+// --- Notifications API Requests ---
+export function getNotifications() {
+  return axios.get<{ success: boolean; notifications: any[] }>(`${API_URL}/tenant/notifications`)
+}
+
+export function markAllNotificationsRead() {
+  return axios.post<{ success: boolean; message: string }>(`${API_URL}/tenant/notifications/mark-read`)
+}
