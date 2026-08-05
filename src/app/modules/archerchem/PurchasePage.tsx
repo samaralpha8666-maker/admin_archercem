@@ -246,7 +246,7 @@ const PurchasePage: FC = () => {
     }
   }
 
-  // Direct Printable Document Generator matching 1:1 archerchem-erp 2 PDF layout
+  // Direct Printable Document Generator
   const executePrintPR = (prObj?: PRRecord | any) => {
     const data = prObj || formData
     const itemsList: PRItem[] = data.items && data.items.length ? data.items : [{ description: '', qty: '' }]
@@ -378,17 +378,17 @@ const PurchasePage: FC = () => {
     <>
       <PageTitle breadcrumbs={[]}>Purchase Requisitions &amp; Approvals</PageTitle>
       <Content>
-        {/* Navigation Bar */}
+        {/* Top Metronic Navigation Toolbar */}
         <div className='card mb-6 border-0 shadow-sm'>
           <div className='card-body py-3 d-flex justify-content-between align-items-center flex-wrap gap-4'>
             <div className='d-flex align-items-center gap-3'>
               <button
                 onClick={() => setViewState('directory')}
                 className={`btn btn-sm px-5 py-3 fw-bold ${
-                  viewState === 'directory' ? 'btn-primary' : 'btn-light-secondary text-gray-800'
+                  viewState === 'directory' ? 'btn-primary' : 'btn-light-primary text-primary'
                 }`}
               >
-                📋 Purchase Requisitions ({prList.length})
+                📋 Requisitions Directory ({prList.length})
               </button>
               <button
                 onClick={() => {
@@ -412,7 +412,7 @@ const PurchasePage: FC = () => {
                   setViewState('form')
                 }}
                 className={`btn btn-sm px-5 py-3 fw-bold ${
-                  viewState === 'form' ? 'btn-primary' : 'btn-light-secondary text-gray-800'
+                  viewState === 'form' ? 'btn-primary' : 'btn-light-primary text-primary'
                 }`}
               >
                 ➕ Raise New PR
@@ -420,7 +420,7 @@ const PurchasePage: FC = () => {
               <button
                 onClick={() => setViewState('approvals')}
                 className={`btn btn-sm px-5 py-3 fw-bold position-relative ${
-                  viewState === 'approvals' ? 'btn-primary' : 'btn-light-secondary text-gray-800'
+                  viewState === 'approvals' ? 'btn-primary' : 'btn-light-primary text-primary'
                 }`}
               >
                 ⏳ Pending Admin Approvals
@@ -434,63 +434,64 @@ const PurchasePage: FC = () => {
           </div>
         </div>
 
-        {/* VIEW 1: REQUISITIONS DIRECTORY (Exact 1:1 Match to archerchem-erp 2) */}
+        {/* VIEW 1: REQUISITIONS DIRECTORY (Metronic Design System) */}
         {viewState === 'directory' && (
           <div className='card border-0 shadow-sm'>
             <div className='card-header border-0 pt-6 d-flex justify-content-between align-items-center flex-wrap gap-4'>
-              <div className='d-flex align-items-center gap-3'>
-                <span className='fs-2'>📋</span>
-                <div>
-                  <h3 className='card-title fw-bold text-gray-900 fs-3 m-0'>Purchase Requisition Forms</h3>
-                  <span className='text-gray-500 fs-7 fw-semibold'>ADRA · Archerchem Instruments — Vasai Factory</span>
-                </div>
+              <h3 className='card-title align-items-start flex-column'>
+                <span className='card-label fw-bold text-gray-900 fs-3'>Purchase Requisition Forms</span>
+                <span className='text-gray-500 mt-1 fw-semibold fs-7'>
+                  ADRA · Archerchem Instruments — Vasai Factory
+                </span>
+              </h3>
+              <div className='card-toolbar gap-3'>
+                <button
+                  onClick={() => {
+                    const nextNo = `PR-2026-${String(prList.length + 1).padStart(3, '0')}`
+                    setFormData({
+                      prNo: nextNo,
+                      date: new Date().toISOString().split('T')[0],
+                      department: 'R&D',
+                      fulfillmentDate: '',
+                      preferredVendor: 'Arrow Electronics',
+                      status: 'pending',
+                      items: [
+                        { description: '', qty: '10 Pc' },
+                        { description: '', qty: '' }
+                      ],
+                      notes: '',
+                      requisitionBy: '',
+                      approvedBy: ''
+                    })
+                    setActivePrId(null)
+                    setViewState('form')
+                  }}
+                  className='btn btn-primary btn-sm fw-bold'
+                >
+                  <i className='bi bi-plus-lg me-1'></i> + New PR
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  const nextNo = `PR-2026-${String(prList.length + 1).padStart(3, '0')}`
-                  setFormData({
-                    prNo: nextNo,
-                    date: new Date().toISOString().split('T')[0],
-                    department: 'R&D',
-                    fulfillmentDate: '',
-                    preferredVendor: 'Arrow Electronics',
-                    status: 'pending',
-                    items: [
-                      { description: '', qty: '10 Pc' },
-                      { description: '', qty: '' }
-                    ],
-                    notes: '',
-                    requisitionBy: '',
-                    approvedBy: ''
-                  })
-                  setActivePrId(null)
-                  setViewState('form')
-                }}
-                className='btn btn-primary btn-sm fw-bold'
-              >
-                + New PR
-              </button>
             </div>
 
             <div className='card-body pt-4'>
-              {/* Stat Counter Cards (1:1 archerchem-erp 2 design) */}
+              {/* Stat Counter Cards */}
               <div className='row g-4 mb-6'>
                 <div className='col-md-4'>
-                  <div className='border rounded p-4 text-center bg-light bg-opacity-50'>
-                    <div className='fs-2hx fw-bolder text-gray-900'>{prList.length}</div>
-                    <div className='fs-7 fw-bold text-gray-500 text-uppercase'>Total PRs</div>
+                  <div className='card bg-light-primary border-primary border-dashed p-5 text-center'>
+                    <div className='fs-2hx fw-bolder text-primary'>{prList.length}</div>
+                    <div className='fs-7 fw-bold text-primary text-uppercase'>Total PRs</div>
                   </div>
                 </div>
                 <div className='col-md-4'>
-                  <div className='border border-warning border-dashed rounded p-4 text-center bg-light-warning'>
+                  <div className='card bg-light-warning border-warning border-dashed p-5 text-center'>
                     <div className='fs-2hx fw-bolder text-warning'>{pendingCount}</div>
                     <div className='fs-7 fw-bold text-warning text-uppercase'>⏳ Pending Admin Approval</div>
                   </div>
                 </div>
                 <div className='col-md-4'>
-                  <div className='border border-success border-dashed rounded p-4 text-center bg-light-success'>
+                  <div className='card bg-light-success border-success border-dashed p-5 text-center'>
                     <div className='fs-2hx fw-bolder text-success'>{approvedCount}</div>
-                    <div className='fs-7 fw-bold text-success text-uppercase'>✅ Approved</div>
+                    <div className='fs-7 fw-bold text-success text-uppercase'>✅ Approved Requisitions</div>
                   </div>
                 </div>
               </div>
@@ -503,7 +504,7 @@ const PurchasePage: FC = () => {
                       key={st}
                       onClick={() => setFilterChip(st)}
                       className={`btn btn-sm px-4 py-2 fw-bold text-capitalize ${
-                        filterChip === st ? 'btn-primary' : 'btn-light-secondary text-gray-700'
+                        filterChip === st ? 'btn-primary' : 'btn-light'
                       }`}
                     >
                       {st === 'pending' ? '⏳ Pending' : st === 'approved' ? '✅ Approved' : st === 'rejected' ? '❌ Rejected' : 'All'}
@@ -511,7 +512,7 @@ const PurchasePage: FC = () => {
                   ))}
                 </div>
                 <div className='position-relative w-250px'>
-                  <span className='position-absolute ms-3 top-50 translate-middle-y text-gray-500'>🔍</span>
+                  <span className='position-absolute ms-3 top-50 translate-middle-y text-gray-500 fs-6'>🔍</span>
                   <input
                     type='text'
                     value={searchQuery}
@@ -556,7 +557,7 @@ const PurchasePage: FC = () => {
                           <td>
                             <span
                               onClick={() => executePrintPR(pr)}
-                              className='text-gray-900 fw-bolder text-hover-primary cursor-pointer fs-6'
+                              className='text-gray-900 fw-bolder text-hover-primary cursor-pointer fs-6 d-block'
                             >
                               {pr.prNo}
                             </span>
@@ -590,7 +591,7 @@ const PurchasePage: FC = () => {
                                 className='btn btn-icon btn-light-info btn-sm'
                                 title='Direct Print PDF'
                               >
-                                🖨️
+                                <i className='bi bi-printer fs-5'></i>
                               </button>
                               <button
                                 onClick={() => {
@@ -601,7 +602,7 @@ const PurchasePage: FC = () => {
                                 className='btn btn-icon btn-light-primary btn-sm'
                                 title='Edit PR'
                               >
-                                ✏️
+                                <i className='bi bi-pencil fs-5'></i>
                               </button>
                               <button
                                 onClick={async () => {
@@ -618,7 +619,7 @@ const PurchasePage: FC = () => {
                                 className='btn btn-icon btn-light-danger btn-sm'
                                 title='Delete PR'
                               >
-                                🗑️
+                                <i className='bi bi-trash fs-5'></i>
                               </button>
                             </div>
                           </td>
@@ -632,90 +633,96 @@ const PurchasePage: FC = () => {
           </div>
         )}
 
-        {/* VIEW 2: REQUISITION FORM (Exact 1:1 Match to archerchem-erp 2) */}
+        {/* VIEW 2: REQUISITION FORM (FULL PAGE METRONIC WIDTH) */}
         {viewState === 'form' && (
-          <div className='row justify-content-center'>
-            <div className='col-lg-10'>
-              {/* Form Header Banner */}
-              <div
-                className='card border-0 shadow-lg mb-6 overflow-hidden'
-                style={{ borderRadius: '12px', borderColor: '#312e81' }}
-              >
-                <div
-                  className='p-6 d-flex align-items-center justify-content-between border-bottom'
-                  style={{ backgroundColor: '#ffffff', borderColor: '#312e81' }}
-                >
-                  <h2 className='m-0 fw-black tracking-wide' style={{ color: '#1e1b4b', fontSize: '26px', fontFamily: 'Georgia, serif' }}>
+          <div className='d-flex flex-column gap-5'>
+            {/* Header Banner - Full Page Width Metronic Standard */}
+            <div
+              className='card border-0 shadow-sm overflow-hidden'
+              style={{ background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: '12px' }}
+            >
+              <div className='card-body p-6 text-white d-flex align-items-center justify-content-between flex-wrap gap-4'>
+                <div className='d-flex align-items-center gap-4'>
+                  <div className='fw-bolder fs-2 px-4 py-2 bg-white bg-opacity-20 rounded text-white' style={{ letterSpacing: '1px' }}>
                     ADRA
-                  </h2>
-                  <div className='d-flex align-items-center gap-2'>
-                    <img src={toAbsoluteUrl('media/logos/archerchem.png')} alt='Archerchem Logo' style={{ height: '32px' }} />
-                    <span className='fw-bold text-uppercase fs-9 text-gray-700' style={{ letterSpacing: '1px' }}>
-                      ARCHERCHEM<br />INSTRUMENTS
-                    </span>
+                  </div>
+                  <div>
+                    <h2 className='text-white fw-bolder mb-1 fs-2'>Archerchem Instruments</h2>
+                    <p className='text-white text-opacity-75 fs-7 m-0 fw-semibold'>
+                      PURCHASE REQUISITION FORM · Vasai Factory (HQ)
+                    </p>
                   </div>
                 </div>
-
-                <div
-                  className='py-3 px-6 text-center text-white fw-black text-uppercase'
-                  style={{ backgroundColor: '#1e1b4b', fontSize: '15px', letterSpacing: '2px' }}
-                >
-                  PURCHASE REQUISITION FORM
+                <div className='d-flex gap-3'>
+                  <button
+                    type='button'
+                    onClick={() => setViewState('directory')}
+                    className='btn btn-light-secondary text-gray-800 fw-bold px-4 py-2'
+                  >
+                    ← Back to Requisitions
+                  </button>
                 </div>
               </div>
+            </div>
 
-              {/* CARD 1: Basic Details */}
-              <div className='card border-0 shadow-sm mb-6 rounded-4'>
-                <div className='card-header border-0 pt-6 pb-2'>
-                  <h3 className='card-title fw-bold text-gray-900 fs-4'>
-                    <span className='fs-3 me-2'>📋</span> Basic Details
-                  </h3>
-                </div>
-                <div className='card-body pt-0'>
-                  <div className='row g-4'>
+            {/* Main Form Card - Full Width Metronic Standard */}
+            <div className='card border-0 shadow-sm'>
+              <div className='card-body p-6 p-lg-8'>
+                {/* 📋 Basic Details */}
+                <div className='border rounded p-6 mb-6 bg-light bg-opacity-40'>
+                  <h4 className='fw-bolder text-primary fs-4 mb-5 d-flex align-items-center gap-2'>
+                    📋 Basic Details
+                  </h4>
+                  <div className='row g-4 mb-4'>
                     <div className='col-md-6'>
-                      <label className='form-label fw-bold fs-8 text-muted text-uppercase'>PR NO. (AUTO)</label>
+                      <label className='form-label fw-bold fs-7 text-uppercase text-gray-700'>PR NO. (AUTO)</label>
                       <input
                         type='text'
-                        className='form-control form-control-solid fw-bold fs-6 text-gray-800'
+                        className='form-control form-control-solid fs-7 fw-bold text-gray-800'
                         value={formData.prNo || ''}
                         onChange={(e) => setFormData({ ...formData, prNo: e.target.value })}
                         placeholder='PR-2026-001'
                       />
                     </div>
                     <div className='col-md-6'>
-                      <label className='form-label fw-bold fs-8 text-muted text-uppercase required'>DATE *</label>
+                      <label className='form-label fw-bold fs-7 text-uppercase text-gray-700 required'>DATE *</label>
                       <input
                         type='date'
-                        className='form-control form-control-solid fw-bold fs-6 text-gray-800'
+                        className='form-control form-control-solid fs-7 fw-bold text-gray-800'
                         value={formData.date || ''}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       />
                     </div>
-                    <div className='col-12'>
-                      <label className='form-label fw-bold fs-8 text-muted text-uppercase required'>DEPARTMENT *</label>
+                  </div>
+
+                  <div className='row g-4 mb-4'>
+                    <div className='col-md-6'>
+                      <label className='form-label fw-bold fs-7 text-uppercase text-gray-700 required'>DEPARTMENT *</label>
                       <input
                         type='text'
-                        className='form-control form-control-solid fw-semibold fs-6'
+                        className='form-control form-control-solid fs-7'
                         value={formData.department || ''}
                         onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                         placeholder='e.g. R&D, Production, QC, Admin'
                       />
                     </div>
-                    <div className='col-12'>
-                      <label className='form-label fw-bold fs-8 text-muted text-uppercase'>FULFILLMENT DATE</label>
+                    <div className='col-md-6'>
+                      <label className='form-label fw-bold fs-7 text-uppercase text-gray-700'>FULFILLMENT DATE</label>
                       <input
                         type='date'
-                        className='form-control form-control-solid fw-semibold fs-6'
+                        className='form-control form-control-solid fs-7'
                         value={formData.fulfillmentDate || ''}
                         onChange={(e) => setFormData({ ...formData, fulfillmentDate: e.target.value })}
                       />
                     </div>
-                    <div className='col-12'>
-                      <label className='form-label fw-bold fs-8 text-muted text-uppercase'>PREFERRED VENDOR</label>
+                  </div>
+
+                  <div className='row g-4'>
+                    <div className='col-md-12'>
+                      <label className='form-label fw-bold fs-7 text-uppercase text-gray-700'>PREFERRED VENDOR</label>
                       <input
                         type='text'
-                        className='form-control form-control-solid fw-semibold fs-6'
+                        className='form-control form-control-solid fs-7'
                         value={formData.preferredVendor || ''}
                         onChange={(e) => setFormData({ ...formData, preferredVendor: e.target.value })}
                         placeholder='e.g. Arrow Electronics'
@@ -723,27 +730,25 @@ const PurchasePage: FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* CARD 2: Items Required */}
-              <div className='card border-0 shadow-sm mb-6 rounded-4'>
-                <div className='card-header border-0 pt-6 pb-2 d-flex justify-content-between align-items-center'>
-                  <h3 className='card-title fw-bold text-gray-900 fs-4'>
-                    <span className='fs-3 me-2'>📦</span> Items Required
-                  </h3>
-                  <button onClick={handleAddItem} className='btn btn-light-primary btn-sm fw-bold px-4'>
-                    + Add Item
-                  </button>
-                </div>
-                <div className='card-body pt-2'>
+                {/* 📦 Items Required */}
+                <div className='border rounded p-6 mb-6 bg-light bg-opacity-40'>
+                  <div className='d-flex justify-content-between align-items-center mb-4'>
+                    <h4 className='fw-bolder text-primary fs-4 m-0 d-flex align-items-center gap-2'>
+                      📦 Items Required
+                    </h4>
+                    <button onClick={handleAddItem} className='btn btn-light-primary btn-sm fw-bold px-4'>
+                      <i className='bi bi-plus-lg me-1'></i> + Add Item Row
+                    </button>
+                  </div>
                   <div className='table-responsive'>
-                    <table className='table table-bordered align-middle gs-4 gy-3 border-gray-300'>
-                      <thead>
-                        <tr className='fw-bold text-gray-700 bg-light-primary fs-8 text-uppercase'>
-                          <th style={{ width: '50px' }} className='text-center'>Sr.</th>
+                    <table className='table table-bordered border-gray-300 align-middle gs-4 gy-3 fs-7 mb-0'>
+                      <thead className='bg-light-primary text-primary fw-bolder'>
+                        <tr>
+                          <th style={{ width: '60px' }} className='text-center'>Sr.</th>
                           <th>Description</th>
-                          <th style={{ width: '160px' }}>Qty</th>
-                          <th style={{ width: '50px' }} className='text-center'>Action</th>
+                          <th style={{ width: '180px' }}>Qty</th>
+                          <th style={{ width: '60px' }} className='text-center'>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -783,18 +788,12 @@ const PurchasePage: FC = () => {
                     </table>
                   </div>
                 </div>
-              </div>
 
-              {/* CARD 3: Notes & Sign-off */}
-              <div className='card border-0 shadow-sm mb-6 rounded-4'>
-                <div className='card-header border-0 pt-6 pb-2'>
-                  <h3 className='card-title fw-bold text-gray-900 fs-4'>
-                    <span className='fs-3 me-2'>📝</span> Notes &amp; ✍️ Sign-off
-                  </h3>
-                </div>
-                <div className='card-body pt-0'>
+                {/* 📝 Notes & Sign-off */}
+                <div className='border rounded p-6 mb-6 bg-light bg-opacity-40'>
+                  <h4 className='fw-bolder text-primary fs-4 mb-4'>📝 Notes &amp; ✍️ Sign-off</h4>
                   <div className='mb-4'>
-                    <label className='form-label fw-bold fs-8 text-muted text-uppercase'>NOTES</label>
+                    <label className='form-label fw-bold fs-7 text-uppercase text-gray-700'>NOTES</label>
                     <textarea
                       className='form-control form-control-solid fs-7'
                       rows={3}
@@ -806,20 +805,20 @@ const PurchasePage: FC = () => {
 
                   <div className='row g-4'>
                     <div className='col-md-6'>
-                      <label className='form-label fw-bold fs-8 text-muted text-uppercase required'>REQUISITION BY *</label>
+                      <label className='form-label fw-bold fs-7 text-uppercase text-gray-700 required'>REQUISITION BY *</label>
                       <input
                         type='text'
-                        className='form-control form-control-solid fw-bold fs-6'
+                        className='form-control form-control-solid fs-7 fw-bold'
                         value={formData.requisitionBy || ''}
                         onChange={(e) => setFormData({ ...formData, requisitionBy: e.target.value })}
                         placeholder='Your Name'
                       />
                     </div>
                     <div className='col-md-6'>
-                      <label className='form-label fw-bold fs-8 text-muted text-uppercase'>APPROVED BY (ADMIN)</label>
+                      <label className='form-label fw-bold fs-7 text-uppercase text-gray-700'>APPROVED BY (ADMIN)</label>
                       <input
                         type='text'
-                        className='form-control form-control-solid fw-bold fs-6'
+                        className='form-control form-control-solid fs-7 fw-bold'
                         value={formData.approvedBy || ''}
                         onChange={(e) => setFormData({ ...formData, approvedBy: e.target.value })}
                         placeholder='Admin Approval Name (Auto-filled on approval)'
@@ -828,25 +827,18 @@ const PurchasePage: FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Action Toolbar */}
-              <div className='d-flex align-items-center justify-content-between gap-4 mb-8'>
-                <button
-                  type='button'
-                  onClick={() => setViewState('directory')}
-                  className='btn btn-light-secondary text-gray-800 fw-bold px-6 py-3'
-                >
-                  ← Back to Requisitions
-                </button>
-                <div className='d-flex gap-3'>
-                  <button
-                    type='button'
-                    onClick={() => handleSubmitPR('pending', false)}
-                    className='btn btn-primary fw-bold px-8 py-3 fs-6'
-                  >
-                    ✅ Submit PR for Admin Approval
-                  </button>
+                {/* Action Buttons matching standard Metronic Theme */}
+                <div className='d-flex flex-wrap align-items-center justify-content-between gap-4 pt-4 border-top'>
+                  <div className='d-flex gap-3'>
+                    <button
+                      type='button'
+                      onClick={() => handleSubmitPR('pending', false)}
+                      className='btn btn-primary fw-bold px-6 py-3 fs-6'
+                    >
+                      ✅ Submit PR for Admin Approval
+                    </button>
+                  </div>
                   <button
                     type='button'
                     onClick={() => executePrintPR()}
@@ -860,7 +852,7 @@ const PurchasePage: FC = () => {
           </div>
         )}
 
-        {/* VIEW 3: ADMIN APPROVAL WORKFLOW MANAGER (1:1 archerchem-erp 2) */}
+        {/* VIEW 3: ADMIN APPROVAL WORKFLOW MANAGER */}
         {viewState === 'approvals' && (
           <div className='card border-0 shadow-sm'>
             <div className='card-header border-0 pt-6 d-flex justify-content-between align-items-center flex-wrap gap-4'>
@@ -887,7 +879,7 @@ const PurchasePage: FC = () => {
 
             <div className='card-body pt-2'>
               {prList.filter((p) => p.status === 'pending').length === 0 ? (
-                <div className='text-center text-muted py-12 fs-5'>
+                <div className='text-center text-gray-500 py-12 fs-5'>
                   <div className='fs-1 mb-2'>🎉</div>
                   No pending purchase requisitions awaiting approval.
                 </div>
