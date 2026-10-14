@@ -310,3 +310,15 @@ export function getStoreHistory(params?: { itemId?: number | string; branch?: st
   return axios.get<{ success: boolean; logs: any[]; error?: string }>(`${API_URL}/tenant/store/history`, { params })
 }
 
+export function bulkImportStoreItems(payload: { items: any[]; branch?: string }) {
+  return axios.post<{
+    success: boolean
+    message: string
+    createdCount: number
+    updatedCount: number
+    totalProcessed: number
+    items: any[]
+    error?: string
+  }>(`${API_URL}/tenant/store/bulk`, payload)
+}
+

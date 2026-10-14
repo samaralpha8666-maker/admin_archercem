@@ -33,6 +33,75 @@ interface LinTestWeightGroup {
   decMax: LinSubRow
 }
 
+export interface LinearityRowData {
+  srNo: string
+  load: string
+  reading: string
+  difference: string
+  isSpacer?: boolean
+  isCalcRow?: boolean
+}
+
+export const createEmptyLinearityRows = (): LinearityRowData[] => [
+  { srNo: '1.', load: 'TW (A)', reading: '', difference: '' },
+  { srNo: '',   load: '0',      reading: '', difference: '' },
+  { srNo: '2.', load: 'TAW 1',  reading: '', difference: '' },
+  { srNo: '',   load: '0',      reading: '', difference: '' },
+  { srNo: '3.', load: 'TW (B)', reading: '', difference: '' },
+  { srNo: '',   load: '0',      reading: '', difference: '' },
+  { srNo: '4.', load: 'TAW 2',  reading: '', difference: '' },
+  { srNo: '',   load: '0',      reading: '', difference: '' },
+  { srNo: '5.', load: 'TW (C)', reading: '', difference: '' },
+  { srNo: '',   load: '',       reading: '', difference: '', isSpacer: true },
+  { srNo: '6.', load: 'A – B',  reading: '-', difference: '', isCalcRow: true },
+  { srNo: '7.', load: 'A – C',  reading: '-', difference: '', isCalcRow: true },
+  { srNo: '',   load: '',       reading: '', difference: '', isSpacer: true }
+]
+
+export const DEFAULT_LINEARITY_ROWS: LinearityRowData[] = [
+  { srNo: '1.', load: 'TW (A)', reading: '200.00g', difference: '0.00g' },
+  { srNo: '',   load: '0',      reading: '0.00g',   difference: '0.00g' },
+  { srNo: '2.', load: 'TAW 1',  reading: '200.00g', difference: '0.00g' },
+  { srNo: '',   load: '0',      reading: '0.00g',   difference: '0.00g' },
+  { srNo: '3.', load: 'TW (B)', reading: '500.00g', difference: '0.01g' },
+  { srNo: '',   load: '0',      reading: '0.00g',   difference: '0.00g' },
+  { srNo: '4.', load: 'TAW 2',  reading: '500.00g', difference: '0.00g' },
+  { srNo: '',   load: '0',      reading: '0.00g',   difference: '0.00g' },
+  { srNo: '5.', load: 'TW (C)', reading: '1000.00g', difference: '0.01g' },
+  { srNo: '',   load: '',       reading: '',         difference: '', isSpacer: true },
+  { srNo: '6.', load: 'A – B',  reading: '-',        difference: '0.01g', isCalcRow: true },
+  { srNo: '7.', load: 'A – C',  reading: '-',        difference: '0.01g', isCalcRow: true },
+  { srNo: '',   load: '',       reading: '',         difference: '', isSpacer: true }
+]
+
+export const getReportLinRows = (record?: QCRecord | Partial<QCRecord>): LinearityRowData[] => {
+  const rawRows = record?.linRows || (record as any)?.lin_rows
+  if (rawRows && Array.isArray(rawRows) && rawRows.length > 0) {
+    return rawRows
+  }
+  if (record?.linWeightA) {
+    const a = record.linWeightA
+    const b = record.linWeightB
+    const c = record.linWeightC
+    return [
+      { srNo: '1.', load: 'TW (A)', reading: a?.incMax?.disp || '200.00g', difference: a?.incMax?.diff || '0.00g' },
+      { srNo: '',   load: '0',      reading: a?.inc0?.disp || '0.00g',   difference: a?.inc0?.diff || '0.00g' },
+      { srNo: '2.', load: 'TAW 1',  reading: a?.decMax?.disp || '200.00g', difference: a?.decMax?.diff || '0.00g' },
+      { srNo: '',   load: '0',      reading: a?.dec0?.disp || '0.00g',   difference: a?.dec0?.diff || '0.00g' },
+      { srNo: '3.', load: 'TW (B)', reading: b?.incMax?.disp || '500.00g', difference: b?.incMax?.diff || '0.01g' },
+      { srNo: '',   load: '0',      reading: b?.inc0?.disp || '0.00g',   difference: b?.inc0?.diff || '0.00g' },
+      { srNo: '4.', load: 'TAW 2',  reading: b?.decMax?.disp || '500.00g', difference: b?.decMax?.diff || '0.00g' },
+      { srNo: '',   load: '0',      reading: b?.dec0?.disp || '0.00g',   difference: b?.dec0?.diff || '0.00g' },
+      { srNo: '5.', load: 'TW (C)', reading: c?.incMax?.disp || '1000.00g', difference: c?.incMax?.diff || '0.01g' },
+      { srNo: '',   load: '',       reading: '',         difference: '', isSpacer: true },
+      { srNo: '6.', load: 'A – B',  reading: '-',        difference: '0.01g', isCalcRow: true },
+      { srNo: '7.', load: 'A – C',  reading: '-',        difference: '0.01g', isCalcRow: true },
+      { srNo: '',   load: '',       reading: '',         difference: '', isSpacer: true }
+    ]
+  }
+  return DEFAULT_LINEARITY_ROWS
+}
+
 interface QCRecord {
   id: string
   model: string
@@ -55,10 +124,11 @@ interface QCRecord {
   repeatRows: RepeatRow[]
   repeatMaxDiff: string
   repeatSD: string
-  linWeightA: LinTestWeightGroup
-  linWeightB: LinTestWeightGroup
-  linWeightC: LinTestWeightGroup
+  linRows?: LinearityRowData[]
   linMaxDiff: string
+  linWeightA?: LinTestWeightGroup
+  linWeightB?: LinTestWeightGroup
+  linWeightC?: LinTestWeightGroup
 }
 
 const DEFAULT_LIN_SUBROW = (loadDefault: string = ''): LinSubRow => ({
@@ -132,6 +202,7 @@ const DEFAULT_QC_DATA: QCRecord[] = [
       dec0: { load: '0', disp: '0.0g', diff: '0.0g' },
       decMax: { load: 'Max', disp: '1000.0g', diff: '0.0g' }
     },
+    linRows: DEFAULT_LINEARITY_ROWS,
     linMaxDiff: '0.1g'
   },
   {
@@ -191,6 +262,7 @@ const DEFAULT_QC_DATA: QCRecord[] = [
       dec0: { load: '0', disp: '0.00g', diff: '0.00g' },
       decMax: { load: 'Max', disp: '1000.00g', diff: '0.00g' }
     },
+    linRows: DEFAULT_LINEARITY_ROWS,
     linMaxDiff: '0.01g'
   }
 ]
@@ -239,6 +311,28 @@ function printQCReport(c: QCRecord) {
         <td style="text-align:center">${r.err || ''}</td>
       </tr>`
     )
+    .join('')
+
+  const linRowsData = getReportLinRows(c)
+  const linRowsHtml = linRowsData
+    .map((r) => {
+      if (r.isSpacer) {
+        return `
+        <tr style="height:14px;background:#fff">
+          <td style="border:1px solid #000">&nbsp;</td>
+          <td style="border:1px solid #000">&nbsp;</td>
+          <td style="border:1px solid #000">&nbsp;</td>
+          <td style="border:1px solid #000">&nbsp;</td>
+        </tr>`
+      }
+      return `
+      <tr>
+        <td style="text-align:center;font-weight:700;border:1px solid #000;padding:4px 6px">${r.srNo || '&nbsp;'}</td>
+        <td style="text-align:center;font-weight:700;border:1px solid #000;padding:4px 6px">${r.load || '&nbsp;'}</td>
+        <td style="text-align:center;border:1px solid #000;padding:4px 6px">${r.reading || '&nbsp;'}</td>
+        <td style="text-align:center;border:1px solid #000;padding:4px 6px">${r.difference || '&nbsp;'}</td>
+      </tr>`
+    })
     .join('')
 
   const html = `<!DOCTYPE html>
@@ -439,88 +533,29 @@ function printQCReport(c: QCRecord) {
       </div>
     </div>
 
-    <!-- Sec 4: Linearity Test -->
-    <div class="sec-block lin-table-wrap">
-      <div class="sec-title-bar">4. LINEARITY TEST</div>
-      <table>
+    <!-- Sec 4: 7.1.5 LINEARITY TEST RESULTS -->
+    <div style="margin-top:10px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:900;color:#000;margin-bottom:5px;letter-spacing:0.5px">
+        7.1.5 LINEARITY TEST RESULTS
+      </div>
+      <table style="width:100%;border-collapse:collapse;border:2px solid #000;font-size:10.5px">
         <thead>
-          <tr>
-            <th rowspan="2">Test Point</th>
-            <th colspan="2">Load (g)</th>
-            <th colspan="2">Displayed Weight (g)</th>
-            <th colspan="2">Difference (g)</th>
-            <th rowspan="2">Max. Difference</th>
-          </tr>
-          <tr>
-            <th>Increasing</th>
-            <th>Decreasing</th>
-            <th>Increasing</th>
-            <th>Decreasing</th>
-            <th>Increasing</th>
-            <th>Decreasing</th>
+          <tr style="background-color:#bcbec0">
+            <th style="border:1px solid #000;padding:6px 8px;font-weight:900;text-align:center;width:15%;color:#000">SR. NO.</th>
+            <th style="border:1px solid #000;padding:6px 8px;font-weight:900;text-align:center;width:25%;color:#000">LOAD</th>
+            <th style="border:1px solid #000;padding:6px 8px;font-weight:900;text-align:center;width:30%;color:#000">READING</th>
+            <th style="border:1px solid #000;padding:6px 8px;font-weight:900;text-align:center;width:30%;color:#000">DIFFERENCE</th>
           </tr>
         </thead>
         <tbody>
+          ${linRowsHtml}
           <tr>
-            <td rowspan="2" style="font-weight:800">TW (A)</td>
-            <td>${c.linWeightA?.inc0?.load || '0'}</td>
-            <td>${c.linWeightA?.dec0?.load || '0'}</td>
-            <td>${c.linWeightA?.inc0?.disp || '0.0g'}</td>
-            <td>${c.linWeightA?.dec0?.disp || '0.0g'}</td>
-            <td>${c.linWeightA?.inc0?.diff || '0.0g'}</td>
-            <td>${c.linWeightA?.dec0?.diff || '0.0g'}</td>
-            <td>${c.linWeightA?.inc0?.diff || '0.0g'}</td>
-          </tr>
-          <tr>
-            <td>${c.linWeightA?.incMax?.load || 'Max'}</td>
-            <td>${c.linWeightA?.decMax?.load || 'Max'}</td>
-            <td>${c.linWeightA?.incMax?.disp || '1000.1g'}</td>
-            <td>${c.linWeightA?.decMax?.disp || '999.9g'}</td>
-            <td>${c.linWeightA?.incMax?.diff || '+0.1g'}</td>
-            <td>${c.linWeightA?.decMax?.diff || '-0.1g'}</td>
-            <td>${c.linWeightA?.incMax?.diff || '+0.1g'}</td>
-          </tr>
-          <tr>
-            <td rowspan="2" style="font-weight:800">TW (B)</td>
-            <td>${c.linWeightB?.inc0?.load || '0'}</td>
-            <td>${c.linWeightB?.dec0?.load || '0'}</td>
-            <td>${c.linWeightB?.inc0?.disp || '0.0g'}</td>
-            <td>${c.linWeightB?.dec0?.disp || '0.1g'}</td>
-            <td>${c.linWeightB?.inc0?.diff || '0.0g'}</td>
-            <td>${c.linWeightB?.dec0?.diff || '+0.1g'}</td>
-            <td>${c.linWeightB?.dec0?.diff || '+0.1g'}</td>
-          </tr>
-          <tr>
-            <td>${c.linWeightB?.incMax?.load || 'Max'}</td>
-            <td>${c.linWeightB?.decMax?.load || 'Max'}</td>
-            <td>${c.linWeightB?.incMax?.disp || '1000.0g'}</td>
-            <td>${c.linWeightB?.decMax?.disp || '999.9g'}</td>
-            <td>${c.linWeightB?.incMax?.diff || '0.0g'}</td>
-            <td>${c.linWeightB?.decMax?.diff || '-0.1g'}</td>
-            <td>${c.linWeightB?.decMax?.diff || '-0.1g'}</td>
-          </tr>
-          <tr>
-            <td rowspan="2" style="font-weight:800">TW (C)</td>
-            <td>${c.linWeightC?.inc0?.load || '0'}</td>
-            <td>${c.linWeightC?.dec0?.load || '0'}</td>
-            <td>${c.linWeightC?.inc0?.disp || '0.1g'}</td>
-            <td>${c.linWeightC?.dec0?.disp || '0.0g'}</td>
-            <td>${c.linWeightC?.inc0?.diff || '+0.1g'}</td>
-            <td>${c.linWeightC?.dec0?.diff || '0.0g'}</td>
-            <td>${c.linWeightC?.inc0?.diff || '+0.1g'}</td>
-          </tr>
-          <tr>
-            <td>${c.linWeightC?.incMax?.load || 'Max'}</td>
-            <td>${c.linWeightC?.decMax?.load || 'Max'}</td>
-            <td>${c.linWeightC?.incMax?.disp || '1000.0g'}</td>
-            <td>${c.linWeightC?.decMax?.disp || '1000.0g'}</td>
-            <td>${c.linWeightC?.incMax?.diff || '0.0g'}</td>
-            <td>${c.linWeightC?.decMax?.diff || '0.0g'}</td>
-            <td>${c.linWeightC?.incMax?.diff || '0.0g'}</td>
-          </tr>
-          <tr class="summary-row">
-            <td colspan="7" style="text-align:right">Max. Difference</td>
-            <td>${c.linMaxDiff || '0.1g'}</td>
+            <td colspan="3" style="border:1px solid #000;padding:7px 12px;font-weight:900;text-align:center;color:#000;background:#fff">
+              MAXIMUM DIFFERENCE (LINEARITY ERROR)
+            </td>
+            <td style="border:1px solid #000;padding:7px 12px;font-weight:900;text-align:center;color:#000;background:#fff">
+              ${c.linMaxDiff || ''}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -667,17 +702,21 @@ const QCPage: FC = () => {
       repeatRows: Array(10).fill(null).map(() => ({ disp: '', err: '' })),
       repeatMaxDiff: '',
       repeatSD: '',
+      linRows: createEmptyLinearityRows(),
+      linMaxDiff: '',
       linWeightA: DEFAULT_LIN_GROUP(),
       linWeightB: DEFAULT_LIN_GROUP(),
-      linWeightC: DEFAULT_LIN_GROUP(),
-      linMaxDiff: ''
+      linWeightC: DEFAULT_LIN_GROUP()
     })
     setActiveQcId(null)
     setViewState('form')
   }
 
   const handleEdit = (r: QCRecord) => {
-    setFormData({ ...r })
+    setFormData({
+      ...r,
+      linRows: getReportLinRows(r)
+    })
     setActiveQcId(r.id)
     setViewState('form')
   }
@@ -737,6 +776,82 @@ const QCPage: FC = () => {
       repeatMaxDiff: maxDiffStr,
       repeatSD: sdStr
     })
+  }
+
+  // Handle 7.1.5 Linearity row value changes
+  const handleLinearityRowChange = (index: number, field: 'reading' | 'difference' | 'load', value: string) => {
+    const currentRows = formData.linRows && formData.linRows.length === 13
+      ? [...formData.linRows]
+      : createEmptyLinearityRows()
+
+    currentRows[index] = { ...currentRows[index], [field]: value }
+
+    // Auto calculate A - B and A - C if readings for TW(A), TW(B), TW(C) are provided
+    const valA = parseFloat(currentRows[0].reading)
+    const valB = parseFloat(currentRows[4].reading)
+    const valC = parseFloat(currentRows[8].reading)
+
+    if (!isNaN(valA) && !isNaN(valB)) {
+      currentRows[10].difference = `${Math.abs(valA - valB).toFixed(3)}g`
+    }
+    if (!isNaN(valA) && !isNaN(valC)) {
+      currentRows[11].difference = `${Math.abs(valA - valC).toFixed(3)}g`
+    }
+
+    // Auto-compute max difference across all valid differences
+    const diffNumbers: number[] = []
+    currentRows.forEach((r) => {
+      if (r.difference && !r.isSpacer) {
+        const num = parseFloat(r.difference)
+        if (!isNaN(num)) diffNumbers.push(Math.abs(num))
+      }
+    })
+
+    let updatedMaxDiff = formData.linMaxDiff || ''
+    if (diffNumbers.length > 0) {
+      updatedMaxDiff = `${Math.max(...diffNumbers).toFixed(3)}g`
+    }
+
+    setFormData({
+      ...formData,
+      linRows: currentRows,
+      linMaxDiff: updatedMaxDiff
+    })
+  }
+
+  // 1-Click Auto Calculate Linearity Differences and Maximum Error
+  const handleAutoComputeLinearity = () => {
+    const currentRows = formData.linRows && formData.linRows.length === 13
+      ? [...formData.linRows]
+      : createEmptyLinearityRows()
+
+    const valA = parseFloat(currentRows[0].reading)
+    const valB = parseFloat(currentRows[4].reading)
+    const valC = parseFloat(currentRows[8].reading)
+
+    if (!isNaN(valA) && !isNaN(valB)) {
+      currentRows[10].difference = `${Math.abs(valA - valB).toFixed(3)}g`
+    }
+    if (!isNaN(valA) && !isNaN(valC)) {
+      currentRows[11].difference = `${Math.abs(valA - valC).toFixed(3)}g`
+    }
+
+    const diffNumbers: number[] = []
+    currentRows.forEach((r) => {
+      if (r.difference && !r.isSpacer) {
+        const num = parseFloat(r.difference)
+        if (!isNaN(num)) diffNumbers.push(Math.abs(num))
+      }
+    })
+
+    const maxDiff = diffNumbers.length > 0 ? `${Math.max(...diffNumbers).toFixed(3)}g` : '0.000g'
+
+    setFormData({
+      ...formData,
+      linRows: currentRows,
+      linMaxDiff: maxDiff
+    })
+    toast.success(`Linearity calculated: A-B, A-C & Max Error: ${maxDiff}`)
   }
 
   const handleLinGroupChange = (
@@ -1255,418 +1370,119 @@ const QCPage: FC = () => {
                   </div>
                 </div>
 
-                {/* 4️⃣ Linearity Test */}
-                <div className='border rounded p-6 mb-6 bg-light bg-opacity-40'>
-                  <h4 className='fw-bolder text-primary fs-4 mb-1'>4️⃣ Linearity Test</h4>
-                  <p className='text-muted fs-7 mb-5'>
-                    For each Test Weight (A/B/C), fill Load, Displayed Wt. and Difference — Increasing &amp; Decreasing
+                {/* 4️⃣ Linearity Test (7.1.5 LINEARITY TEST RESULTS) */}
+                <div className='border rounded p-6 mb-6 bg-white shadow-sm'>
+                  <div className='d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2'>
+                    <div>
+                      <h4 className='fw-bolder text-gray-900 fs-4 mb-1'>4️⃣ Linearity Test</h4>
+                      <h6 className='fw-bolder text-gray-900 fs-5 mb-0'>7.1.5 LINEARITY TEST RESULTS</h6>
+                    </div>
+                    <button
+                      type='button'
+                      onClick={handleAutoComputeLinearity}
+                      className='btn btn-sm btn-light-primary fw-bold'
+                    >
+                      <i className='bi bi-calculator me-1'></i> Auto Calculate Diff (A-B, A-C) &amp; Error
+                    </button>
+                  </div>
+
+                  <p className='text-muted fs-7 mb-4'>
+                    Fill readings and differences for each test load. Differences for (A – B) and (A – C) as well as the maximum linearity error can be computed automatically.
                   </p>
 
-                  {/* Test Weight A */}
-                  <div className='border rounded p-5 mb-5 bg-white'>
-                    <h5 className='fw-bolder text-primary fs-5 mb-4'>
-                      Test Weight (A)
-                    </h5>
-                    <div className='row g-3 text-muted fw-bold fs-8 text-uppercase mb-2 text-center'>
-                      <div className='col-3'></div>
-                      <div className='col-3'>LOAD (G)</div>
-                      <div className='col-3'>DISPLAYED WT. (G)</div>
-                      <div className='col-3'>DIFFERENCE (G)</div>
-                    </div>
+                  <div className='table-responsive border border-2 border-dark rounded-1'>
+                    <table className='table table-bordered border-dark gs-0 gy-2 mb-0 text-center align-middle'>
+                      <thead>
+                        <tr style={{ backgroundColor: '#bcbec0', color: '#000' }}>
+                          <th style={{ width: '15%', border: '1px solid #000' }} className='fw-bolder fs-7 text-uppercase py-3'>
+                            SR. NO.
+                          </th>
+                          <th style={{ width: '25%', border: '1px solid #000' }} className='fw-bolder fs-7 text-uppercase py-3'>
+                            LOAD
+                          </th>
+                          <th style={{ width: '30%', border: '1px solid #000' }} className='fw-bolder fs-7 text-uppercase py-3'>
+                            READING
+                          </th>
+                          <th style={{ width: '30%', border: '1px solid #000' }} className='fw-bolder fs-7 text-uppercase py-3'>
+                            DIFFERENCE
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(formData.linRows && formData.linRows.length === 13 ? formData.linRows : createEmptyLinearityRows()).map((row, idx) => {
+                          if (row.isSpacer) {
+                            return (
+                              <tr key={idx} style={{ height: '24px', backgroundColor: '#f8fafc' }}>
+                                <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                                <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                                <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                                <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                              </tr>
+                            )
+                          }
 
-                    <div className='d-flex flex-column gap-3'>
-                      {/* Inc 0 */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Inc 0</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.inc0?.load || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'inc0', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.inc0?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'inc0', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.inc0?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'inc0', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
+                          return (
+                            <tr key={idx}>
+                              {/* SR. NO. */}
+                              <td style={{ border: '1px solid #000' }} className='fw-bold text-gray-900 fs-7'>
+                                {row.srNo}
+                              </td>
 
-                      {/* Inc Max */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Inc Max</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.incMax?.load || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'incMax', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.incMax?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'incMax', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.incMax?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'incMax', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
+                              {/* LOAD */}
+                              <td style={{ border: '1px solid #000' }} className='fw-bold text-gray-900 fs-7'>
+                                {row.load}
+                              </td>
 
-                      {/* Dec 0 */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Dec 0</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.dec0?.load || '0'}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'dec0', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.dec0?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'dec0', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.dec0?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'dec0', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
+                              {/* READING */}
+                              <td style={{ border: '1px solid #000', padding: '4px 8px' }}>
+                                {row.isCalcRow ? (
+                                  <span className='fw-bolder text-gray-700 fs-6'>-</span>
+                                ) : (
+                                  <input
+                                    type='text'
+                                    value={row.reading || ''}
+                                    onChange={(e) => handleLinearityRowChange(idx, 'reading', e.target.value)}
+                                    className='form-control form-control-sm text-center fw-bold fs-7 border-0 bg-light'
+                                    placeholder='0.00g'
+                                  />
+                                )}
+                              </td>
 
-                      {/* Dec Max */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Dec Max</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.decMax?.load || 'Max'}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'decMax', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.decMax?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'decMax', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightA?.decMax?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightA', 'decMax', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                              {/* DIFFERENCE */}
+                              <td style={{ border: '1px solid #000', padding: '4px 8px' }}>
+                                <input
+                                  type='text'
+                                  value={row.difference || ''}
+                                  onChange={(e) => handleLinearityRowChange(idx, 'difference', e.target.value)}
+                                  className='form-control form-control-sm text-center fw-bold fs-7 border-0 bg-light'
+                                  placeholder='0.00g'
+                                />
+                              </td>
+                            </tr>
+                          )
+                        })}
 
-                  {/* Test Weight B */}
-                  <div className='border rounded p-5 mb-5 bg-white'>
-                    <h5 className='fw-bolder text-primary fs-5 mb-4'>
-                      Test Weight (B)
-                    </h5>
-                    <div className='row g-3 text-muted fw-bold fs-8 text-uppercase mb-2 text-center'>
-                      <div className='col-3'></div>
-                      <div className='col-3'>LOAD (G)</div>
-                      <div className='col-3'>DISPLAYED WT. (G)</div>
-                      <div className='col-3'>DIFFERENCE (G)</div>
-                    </div>
-
-                    <div className='d-flex flex-column gap-3'>
-                      {/* Inc 0 */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Inc 0</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.inc0?.load || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'inc0', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.inc0?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'inc0', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.inc0?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'inc0', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Inc Max */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Inc Max</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.incMax?.load || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'incMax', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.incMax?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'incMax', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.incMax?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'incMax', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Dec 0 */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Dec 0</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.dec0?.load || '0'}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'dec0', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.dec0?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'dec0', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.dec0?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'dec0', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Dec Max */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Dec Max</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.decMax?.load || 'Max'}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'decMax', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.decMax?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'decMax', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightB?.decMax?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightB', 'decMax', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Test Weight C */}
-                  <div className='border rounded p-5 mb-5 bg-white'>
-                    <h5 className='fw-bolder text-primary fs-5 mb-4'>
-                      Test Weight (C)
-                    </h5>
-                    <div className='row g-3 text-muted fw-bold fs-8 text-uppercase mb-2 text-center'>
-                      <div className='col-3'></div>
-                      <div className='col-3'>LOAD (G)</div>
-                      <div className='col-3'>DISPLAYED WT. (G)</div>
-                      <div className='col-3'>DIFFERENCE (G)</div>
-                    </div>
-
-                    <div className='d-flex flex-column gap-3'>
-                      {/* Inc 0 */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Inc 0</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.inc0?.load || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'inc0', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.inc0?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'inc0', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.inc0?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'inc0', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Inc Max */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Inc Max</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.incMax?.load || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'incMax', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.incMax?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'incMax', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.incMax?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'incMax', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Dec 0 */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Dec 0</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.dec0?.load || '0'}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'dec0', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.dec0?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'dec0', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.dec0?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'dec0', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Dec Max */}
-                      <div className='row g-3 align-items-center fs-7'>
-                        <div className='col-3 fw-bold text-gray-800'>Dec Max</div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.decMax?.load || 'Max'}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'decMax', 'load', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.decMax?.disp || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'decMax', 'disp', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                        <div className='col-3'>
-                          <input
-                            type='text'
-                            value={formData.linWeightC?.decMax?.diff || ''}
-                            onChange={(e) => handleLinGroupChange('linWeightC', 'decMax', 'diff', e.target.value)}
-                            className='form-control form-control-solid fs-7'
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Max Difference Linearity */}
-                  <div>
-                    <label className='form-label fw-bold fs-7 text-uppercase text-gray-700'>
-                      MAX. DIFFERENCE (LINEARITY)
-                    </label>
-                    <input
-                      type='text'
-                      value={formData.linMaxDiff || ''}
-                      onChange={(e) => setFormData({ ...formData, linMaxDiff: e.target.value })}
-                      className='form-control form-control-solid fs-7'
-                      placeholder='Overall max difference'
-                    />
+                        {/* MAXIMUM DIFFERENCE (LINEARITY ERROR) */}
+                        <tr style={{ backgroundColor: '#fff' }}>
+                          <td
+                            colSpan={3}
+                            style={{ border: '1px solid #000' }}
+                            className='fw-bolder text-center py-3 fs-6 text-uppercase text-gray-900'
+                          >
+                            MAXIMUM DIFFERENCE (LINEARITY ERROR)
+                          </td>
+                          <td style={{ border: '1px solid #000', padding: '6px 12px' }}>
+                            <input
+                              type='text'
+                              value={formData.linMaxDiff || ''}
+                              onChange={(e) => setFormData({ ...formData, linMaxDiff: e.target.value })}
+                              className='form-control form-control-sm text-center fw-bolder text-primary fs-6 border-0 bg-light-primary'
+                              placeholder='0.00g'
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
@@ -1990,90 +1806,48 @@ const QCPage: FC = () => {
                   </div>
                 </div>
 
-                {/* Sec 4: Linearity Test */}
-                <div className='border border-primary rounded overflow-hidden mb-4'>
-                  <div className='bg-light-primary text-primary fw-bolder fs-8 px-3 py-1 border-bottom border-primary'>
-                    4. LINEARITY TEST
+                {/* Sec 4: 7.1.5 LINEARITY TEST RESULTS */}
+                <div className='border border-2 border-dark rounded overflow-hidden mb-4'>
+                  <div className='bg-light text-dark fw-bolder fs-7 px-3 py-2 border-bottom border-dark text-uppercase'>
+                    7.1.5 LINEARITY TEST RESULTS
                   </div>
-                  <table className='table table-bordered border-primary gs-2 gy-1 fs-9 mb-0 text-center align-middle'>
-                    <thead className='bg-light'>
-                      <tr className='fw-bold'>
-                        <th rowSpan={2}>Test Point</th>
-                        <th colSpan={2}>Load (g)</th>
-                        <th colSpan={2}>Displayed Weight (g)</th>
-                        <th colSpan={2}>Difference (g)</th>
-                        <th rowSpan={2}>Max. Difference</th>
-                      </tr>
-                      <tr className='fw-bold'>
-                        <th>Increasing</th>
-                        <th>Decreasing</th>
-                        <th>Increasing</th>
-                        <th>Decreasing</th>
-                        <th>Increasing</th>
-                        <th>Decreasing</th>
+                  <table className='table table-bordered border-dark gs-2 gy-1 fs-9 mb-0 text-center align-middle'>
+                    <thead>
+                      <tr style={{ backgroundColor: '#bcbec0', color: '#000' }}>
+                        <th style={{ width: '15%', border: '1px solid #000' }} className='fw-bolder py-2'>SR. NO.</th>
+                        <th style={{ width: '25%', border: '1px solid #000' }} className='fw-bolder py-2'>LOAD</th>
+                        <th style={{ width: '30%', border: '1px solid #000' }} className='fw-bolder py-2'>READING</th>
+                        <th style={{ width: '30%', border: '1px solid #000' }} className='fw-bolder py-2'>DIFFERENCE</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td rowSpan={2} className='fw-bold'>TW (A)</td>
-                        <td>{selectedQC.linWeightA?.inc0?.load || '0'}</td>
-                        <td>{selectedQC.linWeightA?.dec0?.load || '0'}</td>
-                        <td>{selectedQC.linWeightA?.inc0?.disp || '0.0g'}</td>
-                        <td>{selectedQC.linWeightA?.dec0?.disp || '0.0g'}</td>
-                        <td>{selectedQC.linWeightA?.inc0?.diff || '0.0g'}</td>
-                        <td>{selectedQC.linWeightA?.dec0?.diff || '0.0g'}</td>
-                        <td>{selectedQC.linWeightA?.inc0?.diff || '0.0g'}</td>
-                      </tr>
-                      <tr>
-                        <td>{selectedQC.linWeightA?.incMax?.load || 'Max'}</td>
-                        <td>{selectedQC.linWeightA?.decMax?.load || 'Max'}</td>
-                        <td>{selectedQC.linWeightA?.incMax?.disp || '1000.1g'}</td>
-                        <td>{selectedQC.linWeightA?.decMax?.disp || '999.9g'}</td>
-                        <td>{selectedQC.linWeightA?.incMax?.diff || '+0.1g'}</td>
-                        <td>{selectedQC.linWeightA?.decMax?.diff || '-0.1g'}</td>
-                        <td>{selectedQC.linWeightA?.incMax?.diff || '+0.1g'}</td>
-                      </tr>
-                      <tr>
-                        <td rowSpan={2} className='fw-bold'>TW (B)</td>
-                        <td>{selectedQC.linWeightB?.inc0?.load || '0'}</td>
-                        <td>{selectedQC.linWeightB?.dec0?.load || '0'}</td>
-                        <td>{selectedQC.linWeightB?.inc0?.disp || '0.0g'}</td>
-                        <td>{selectedQC.linWeightB?.dec0?.disp || '0.1g'}</td>
-                        <td>{selectedQC.linWeightB?.inc0?.diff || '0.0g'}</td>
-                        <td>{selectedQC.linWeightB?.dec0?.diff || '+0.1g'}</td>
-                        <td>{selectedQC.linWeightB?.dec0?.diff || '+0.1g'}</td>
-                      </tr>
-                      <tr>
-                        <td>{selectedQC.linWeightB?.incMax?.load || 'Max'}</td>
-                        <td>{selectedQC.linWeightB?.decMax?.load || 'Max'}</td>
-                        <td>{selectedQC.linWeightB?.incMax?.disp || '1000.0g'}</td>
-                        <td>{selectedQC.linWeightB?.decMax?.disp || '999.9g'}</td>
-                        <td>{selectedQC.linWeightB?.incMax?.diff || '0.0g'}</td>
-                        <td>{selectedQC.linWeightB?.decMax?.diff || '-0.1g'}</td>
-                        <td>{selectedQC.linWeightB?.decMax?.diff || '-0.1g'}</td>
-                      </tr>
-                      <tr>
-                        <td rowSpan={2} className='fw-bold'>TW (C)</td>
-                        <td>{selectedQC.linWeightC?.inc0?.load || '0'}</td>
-                        <td>{selectedQC.linWeightC?.dec0?.load || '0'}</td>
-                        <td>{selectedQC.linWeightC?.inc0?.disp || '0.1g'}</td>
-                        <td>{selectedQC.linWeightC?.dec0?.disp || '0.0g'}</td>
-                        <td>{selectedQC.linWeightC?.inc0?.diff || '+0.1g'}</td>
-                        <td>{selectedQC.linWeightC?.dec0?.diff || '0.0g'}</td>
-                        <td>{selectedQC.linWeightC?.inc0?.diff || '+0.1g'}</td>
-                      </tr>
-                      <tr>
-                        <td>{selectedQC.linWeightC?.incMax?.load || 'Max'}</td>
-                        <td>{selectedQC.linWeightC?.decMax?.load || 'Max'}</td>
-                        <td>{selectedQC.linWeightC?.incMax?.disp || '1000.0g'}</td>
-                        <td>{selectedQC.linWeightC?.decMax?.disp || '1000.0g'}</td>
-                        <td>{selectedQC.linWeightC?.incMax?.diff || '0.0g'}</td>
-                        <td>{selectedQC.linWeightC?.decMax?.diff || '0.0g'}</td>
-                        <td>{selectedQC.linWeightC?.incMax?.diff || '0.0g'}</td>
-                      </tr>
-                      <tr className='fw-bold bg-light'>
-                        <td colSpan={7} className='text-end pe-3'>Max. Difference</td>
-                        <td>{selectedQC.linMaxDiff || '0.1g'}</td>
+                      {getReportLinRows(selectedQC).map((row, idx) => {
+                        if (row.isSpacer) {
+                          return (
+                            <tr key={idx} style={{ height: '16px', backgroundColor: '#f8fafc' }}>
+                              <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                              <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                              <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                              <td style={{ border: '1px solid #000' }}>&nbsp;</td>
+                            </tr>
+                          )
+                        }
+                        return (
+                          <tr key={idx}>
+                            <td style={{ border: '1px solid #000' }} className='fw-bold text-gray-900'>{row.srNo}</td>
+                            <td style={{ border: '1px solid #000' }} className='fw-bold text-gray-900'>{row.load}</td>
+                            <td style={{ border: '1px solid #000' }}>{row.reading || '—'}</td>
+                            <td style={{ border: '1px solid #000' }}>{row.difference || '—'}</td>
+                          </tr>
+                        )
+                      })}
+                      <tr className='fw-bold bg-white'>
+                        <td colSpan={3} style={{ border: '1px solid #000' }} className='text-center py-2 fs-8 fw-bolder text-uppercase text-gray-900'>
+                          MAXIMUM DIFFERENCE (LINEARITY ERROR)
+                        </td>
+                        <td style={{ border: '1px solid #000' }} className='py-2 fs-8 fw-bolder text-primary'>
+                          {selectedQC.linMaxDiff || '—'}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
