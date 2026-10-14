@@ -272,3 +272,41 @@ export function getNotifications() {
 export function markAllNotificationsRead() {
   return axios.post<{ success: boolean; message: string }>(`${API_URL}/tenant/notifications/mark-read`)
 }
+
+// --- Store & Inventory API Requests ---
+export interface StoreItemPayload {
+  id?: number | string
+  itemName: string
+  quantity: number
+  toleranceLimit: number
+  branch?: string
+  unit?: string
+  category?: string
+  location?: string
+  notes?: string
+}
+
+export function getStoreItems(params?: { search?: string; lowStock?: boolean; branch?: string; itemId?: number | string }) {
+  return axios.get<{ success: boolean; items: any[]; error?: string }>(`${API_URL}/tenant/store`, { params })
+}
+
+export function createStoreItem(itemData: Partial<StoreItemPayload>) {
+  return axios.post<{ success: boolean; item: any; error?: string }>(`${API_URL}/tenant/store`, itemData)
+}
+
+export function updateStoreItem(id: number | string, itemData: Partial<StoreItemPayload>) {
+  return axios.put<{ success: boolean; item: any; error?: string }>(`${API_URL}/tenant/store/${id}`, itemData)
+}
+
+export function adjustStoreStock(id: number | string, payload: { action: 'IN' | 'OUT'; qty: number; reason?: string; reference?: string }) {
+  return axios.post<{ success: boolean; item: any; log?: any; message?: string; error?: string }>(`${API_URL}/tenant/store/${id}/adjust`, payload)
+}
+
+export function deleteStoreItem(id: number | string) {
+  return axios.delete<{ success: boolean; message: string; error?: string }>(`${API_URL}/tenant/store/${id}`)
+}
+
+export function getStoreHistory(params?: { itemId?: number | string; branch?: string }) {
+  return axios.get<{ success: boolean; logs: any[]; error?: string }>(`${API_URL}/tenant/store/history`, { params })
+}
+
